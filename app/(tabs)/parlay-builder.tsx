@@ -22,7 +22,7 @@ interface GameWithPlayers extends Game {
   awayTeamPlayers: Player[];
 }
 
-const betTypes = ['Hits', 'Total Bases', 'RBIs', 'Runs', 'Strikeouts'];
+const betTypes = ['Hits', 'Total Bases', 'Home Runs', 'H+R+RBIs'];
 const thresholds = ['1+', '2+', '3+', '4+'];
 
 export default function ParlayBuilderScreen() {
