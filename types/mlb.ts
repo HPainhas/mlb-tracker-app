@@ -39,6 +39,19 @@ export interface MLBGame {
   };
 }
 
+// Aliases for consistency with existing code
+export type Game = MLBGame;
+export type Player = {
+  id: string;
+  fullName: string;
+  primaryPosition: {
+    code: string;
+    name: string;
+    type: string;
+  };
+  battingOrder?: number;
+};
+
 export interface MLBLineup {
   teamId: number;
   players: MLBPlayer[];

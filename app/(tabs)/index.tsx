@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
@@ -37,90 +36,92 @@ export default function HomeScreen() {
 
   const renderGame = ({ item }: { item: Game }) => (
     <ThemedView style={[
-      styles.gameCard, 
-      { 
-        backgroundColor: Colors[colorScheme ?? 'light'].card,
-        borderColor: Colors[colorScheme ?? 'light'].border,
-      }
+      styles.gameCard,
+      { backgroundColor: Colors[colorScheme ?? 'light'].card }
     ]}>
       <ThemedView style={styles.gameHeader}>
-        <ThemedText style={styles.gameTime}>{item.gameDate}</ThemedText>
-        <ThemedView style={[
-          styles.statusBadge,
-          { backgroundColor: Colors[colorScheme ?? 'light'].accent }
-        ]}>
-          <ThemedText style={styles.statusText}>{item.status.abstractGameState}</ThemedText>
-        </ThemedView>
-      </ThemedView>
-      
-      <ThemedView style={styles.teamsContainer}>
-        <ThemedView style={styles.teamSection}>
-          <ThemedText style={styles.teamName}>{item.teams.away.team.name}</ThemedText>
-          <ThemedText style={styles.teamRecord}>
-            ({item.teams.away.leagueRecord.wins}-{item.teams.away.leagueRecord.losses})
-          </ThemedText>
-        </ThemedView>
-        
-        <ThemedText style={styles.vsText}>@</ThemedText>
-        
-        <ThemedView style={styles.teamSection}>
-          <ThemedText style={styles.teamName}>{item.teams.home.team.name}</ThemedText>
-          <ThemedText style={styles.teamRecord}>
-            ({item.teams.home.leagueRecord.wins}-{item.teams.home.leagueRecord.losses})
-          </ThemedText>
-        </ThemedView>
-      </ThemedView>
-      
-      <ThemedView style={styles.venueContainer}>
+        <ThemedText style={styles.gameTeams}>
+          {item.teams.away.team.name} @ {item.teams.home.team.name}
+        </ThemedText>
         <ThemedText style={[
-          styles.venueText,
+          styles.gameStatus,
+          { color: Colors[colorScheme ?? 'light'].secondary }
+        ]}>
+          {item.status.detailedState}
+        </ThemedText>
+      </ThemedView>
+
+      <ThemedView style={styles.gameDetails}>
+        <ThemedText style={[
+          styles.gameTime,
+          { color: Colors[colorScheme ?? 'light'].secondary }
+        ]}>
+          {new Date(item.gameDate).toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })}
+        </ThemedText>
+
+        <ThemedText style={[
+          styles.gameVenue,
           { color: Colors[colorScheme ?? 'light'].secondary }
         ]}>
           {item.venue.name}
         </ThemedText>
       </ThemedView>
+
+      {(item.teams.away.score !== undefined || item.teams.home.score !== undefined) && (
+        <ThemedView style={styles.scoreContainer}>
+          <ThemedText style={styles.score}>
+            {item.teams.away.team.abbreviation}: {item.teams.away.score || 0}
+          </ThemedText>
+          <ThemedText style={styles.score}>
+            {item.teams.home.team.abbreviation}: {item.teams.home.score || 0}
+          </ThemedText>
+        </ThemedView>
+      )}
     </ThemedView>
   );
 
   if (loading) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.header}>
-          <ThemedText style={styles.title}>Today's Games</ThemedText>
-        </ThemedView>
-        <ThemedView style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
-        </ThemedView>
+      <ThemedView style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
+        <ThemedText style={[styles.loadingText, { color: Colors[colorScheme ?? 'light'].secondary }]}>
+          Loading today's games...
+        </ThemedText>
       </ThemedView>
     );
   }
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <ThemedText style={styles.title}>Today's Games</ThemedText>
-        <ThemedText style={[
-          styles.subtitle,
-          { color: Colors[colorScheme ?? 'light'].secondary }
-        ]}>
-          {games.length} games scheduled
-        </ThemedText>
-      </ThemedView>
-      
-      <FlatList
-        data={games}
-        renderItem={renderGame}
-        keyExtractor={(item) => item.gamePk.toString()}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={Colors[colorScheme ?? 'light'].tint}
-          />
-        }
-        showsVerticalScrollIndicator={false}
-      />
+      <ThemedText style={styles.header}>Today's Games</ThemedText>
+
+      {games.length === 0 ? (
+        <ThemedView style={styles.centerContent}>
+          <ThemedText style={[styles.emptyText, { color: Colors[colorScheme ?? 'light'].secondary }]}>
+            No games scheduled for today
+          </ThemedText>
+          <TouchableOpacity 
+            style={[styles.refreshButton, { backgroundColor: Colors[colorScheme ?? 'light'].tint }]}
+            onPress={onRefresh}
+          >
+            <ThemedText style={styles.refreshButtonText}>Refresh</ThemedText>
+          </TouchableOpacity>
+        </ThemedView>
+      ) : (
+        <FlatList
+          data={games}
+          keyExtractor={(item) => item.gamePk.toString()}
+          renderItem={renderGame}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+        />
+      )}
     </ThemedView>
   );
 }
@@ -130,86 +131,90 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 60,
   },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   header: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 34,
+    fontSize: 28,
     fontWeight: '700',
-    marginBottom: 4,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
-  subtitle: {
+  loadingText: {
+    marginTop: 16,
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: '500',
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '500',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  refreshButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  refreshButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
+    paddingBottom: 20,
   },
   gameCard: {
-    borderRadius: 12,
+    marginHorizontal: 20,
+    marginVertical: 8,
     padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
+    borderRadius: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
     elevation: 2,
   },
   gameHeader: {
+    marginBottom: 12,
+  },
+  gameTeams: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  gameStatus: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  gameDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   gameTime: {
     fontSize: 14,
     fontWeight: '500',
   },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  statusText: {
-    fontSize: 12,
+  gameVenue: {
+    fontSize: 14,
     fontWeight: '500',
+    flex: 1,
+    textAlign: 'right',
   },
-  teamsContainer: {
+  scoreContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5EA',
   },
-  teamSection: {
-    flex: 1,
-  },
-  teamName: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  teamRecord: {
-    fontSize: 14,
-    fontWeight: '400',
-  },
-  vsText: {
+  score: {
     fontSize: 16,
-    fontWeight: '500',
-    marginHorizontal: 16,
-  },
-  venueContainer: {
-    alignItems: 'center',
-  },
-  venueText: {
-    fontSize: 14,
-    fontWeight: '400',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    fontWeight: '600',
   },
 });
