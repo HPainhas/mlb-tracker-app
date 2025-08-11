@@ -5,7 +5,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { useParlayContext } from '@/context/ParlayContext';
+import { useParlay } from '@/context/ParlayContext';
 import { getSchedule, getLineup } from '@/services/mlbApi';
 import { Game, Player } from '@/types/mlb';
 
@@ -25,7 +25,7 @@ export default function ParlayBuilderScreen() {
   const [showPlayerModal, setShowPlayerModal] = useState(false);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [gameLineups, setGameLineups] = useState<{[key: string]: Player[]}>({});
-  const { addParlay, usedPlayers } = useParlayContext();
+  const { addParlay, isPlayerUsed } = useParlay();
   const colorScheme = useColorScheme();
 
   useEffect(() => {
@@ -86,9 +86,7 @@ export default function ParlayBuilderScreen() {
     setSelectedPlayers([]);
   };
 
-  const isPlayerUsed = (playerId: string) => {
-    return usedPlayers.includes(playerId);
-  };
+  
 
   const renderPlayer = ({ item }: { item: Player }) => (
     <TouchableOpacity
@@ -96,11 +94,11 @@ export default function ParlayBuilderScreen() {
         styles.playerItem,
         {
           backgroundColor: Colors[colorScheme ?? 'light'].card,
-          borderColor: isPlayerUsed(item.id) ? Colors[colorScheme ?? 'light'].error : Colors[colorScheme ?? 'light'].border,
+          borderColor: isPlayerUsed(parseInt(item.id)) ? Colors[colorScheme ?? 'light'].error : Colors[colorScheme ?? 'light'].border,
         }
       ]}
       onPress={() => handlePlayerSelect(item)}
-      disabled={isPlayerUsed(item.id)}
+      disabled={isPlayerUsed(parseInt(item.id))}
     >
       <ThemedView style={styles.playerInfo}>
         <ThemedText style={styles.playerName}>{item.fullName}</ThemedText>
@@ -111,7 +109,7 @@ export default function ParlayBuilderScreen() {
           {item.primaryPosition.name}
         </ThemedText>
       </ThemedView>
-      {isPlayerUsed(item.id) && (
+      {isPlayerUsed(parseInt(item.id)) && (
         <ThemedView style={[
           styles.usedBadge,
           { backgroundColor: Colors[colorScheme ?? 'light'].error }
