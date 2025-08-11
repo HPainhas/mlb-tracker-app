@@ -49,6 +49,9 @@ export const getSchedule = async (): Promise<Game[]> => {
   }
 };
 
+// Export fetchGames as an alias for getSchedule for backwards compatibility
+export const fetchGames = getSchedule;
+
 export const getLineup = async (gameId: number, teamId: number): Promise<Player[]> => {
   try {
     // Try boxscore first
