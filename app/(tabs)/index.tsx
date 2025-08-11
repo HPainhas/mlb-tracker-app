@@ -9,6 +9,18 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { fetchGames } from '@/services/mlbApi';
 import { Game } from '@/types/mlb';
 
+// Helper function to format game time with timezone
+const formatGameTime = (gameDate: string) => {
+  const date = new Date(gameDate);
+  const options: Intl.DateTimeFormatOptions = {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+  };
+  return date.toLocaleTimeString('en-US', options);
+};
+
 export default function GamesScreen() {
   const colorScheme = useColorScheme();
   const [games, setGames] = useState<Game[]>([]);
@@ -36,60 +48,75 @@ export default function GamesScreen() {
     loadGames();
   };
 
-  const renderGame = ({ item: game }: { item: Game }) => (
-    <ThemedView style={[styles.gameCard, { 
-      backgroundColor: Colors[colorScheme ?? 'light'].card,
-      borderColor: Colors[colorScheme ?? 'light'].border,
-    }]}>
-      <ThemedView style={styles.gameHeader}>
-        <ThemedText style={styles.gameTime}>
-          {new Date(game.gameDate).toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          })}
-        </ThemedText>
-        <ThemedText style={[styles.gameStatus, {
-          color: Colors[colorScheme ?? 'light'].muted
-        }]}>
-          {game.status.abstractGameState}
-        </ThemedText>
-      </ThemedView>
+  const renderGame = ({ item: game }: { item: Game }) => {
+    const isGameStarted = game.status.abstractGameState !== 'Preview';
 
-      <ThemedView style={styles.teamsContainer}>
-        <ThemedView style={styles.teamRow}>
-          <ThemedText style={styles.teamName}>
-            {game.teams.away.team.name}
+    return (
+      <ThemedView style={[styles.gameCard, { 
+        backgroundColor: Colors[colorScheme ?? 'light'].card,
+        borderColor: Colors[colorScheme ?? 'light'].border,
+      }]}>
+        <ThemedView style={styles.gameHeader}>
+          <ThemedText style={[styles.gameTime, {
+            color: Colors[colorScheme ?? 'light'].secondary
+          }]}>
+            {formatGameTime(game.gameDate)}
           </ThemedText>
-          <ThemedText style={styles.teamScore}>
-            {game.teams.away.score || '0'}
+          <ThemedText style={[styles.gameStatus, {
+            color: game.status.abstractGameState === 'Live' 
+              ? Colors[colorScheme ?? 'light'].success
+              : game.status.abstractGameState === 'Final'
+              ? Colors[colorScheme ?? 'light'].muted
+              : Colors[colorScheme ?? 'light'].tint
+          }]}>
+            {game.status.detailedState}
           </ThemedText>
         </ThemedView>
 
-        <ThemedText style={[styles.vsText, {
-          color: Colors[colorScheme ?? 'light'].muted
-        }]}>
-          vs
-        </ThemedText>
+        <ThemedView style={styles.teamsContainer}>
+          <ThemedView style={styles.teamRow}>
+            <ThemedText style={styles.teamName}>
+              {game.teams.away.team.name}
+            </ThemedText>
+            {isGameStarted && (
+              <ThemedText style={[styles.teamScore, {
+                color: Colors[colorScheme ?? 'light'].text
+              }]}>
+                {game.teams.away.score}
+              </ThemedText>
+            )}
+          </ThemedView>
 
-        <ThemedView style={styles.teamRow}>
-          <ThemedText style={styles.teamName}>
-            {game.teams.home.team.name}
+          <ThemedText style={[styles.vsText, {
+            color: Colors[colorScheme ?? 'light'].muted
+          }]}>
+            @
           </ThemedText>
-          <ThemedText style={styles.teamScore}>
-            {game.teams.home.score || '0'}
-          </ThemedText>
+
+          <ThemedView style={styles.teamRow}>
+            <ThemedText style={styles.teamName}>
+              {game.teams.home.team.name}
+            </ThemedText>
+            {isGameStarted && (
+              <ThemedText style={[styles.teamScore, {
+                color: Colors[colorScheme ?? 'light'].text
+              }]}>
+                {game.teams.home.score}
+              </ThemedText>
+            )}
+          </ThemedView>
         </ThemedView>
-      </ThemedView>
 
-      {game.venue && (
-        <ThemedText style={[styles.venue, {
-          color: Colors[colorScheme ?? 'light'].secondary
-        }]}>
-          {game.venue.name}
-        </ThemedText>
-      )}
-    </ThemedView>
-  );
+        {game.venue && (
+          <ThemedText style={[styles.venue, {
+            color: Colors[colorScheme ?? 'light'].secondary
+          }]}>
+            {game.venue.name}
+          </ThemedText>
+        )}
+      </ThemedView>
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { 

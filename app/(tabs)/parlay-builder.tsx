@@ -7,7 +7,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useParlay } from '@/context/ParlayContext';
-import { fetchGames } from '@/services/mlbApi';
+import { fetchGames, getAllPlayersForGames } from '@/services/mlbApi';
 import { Game, Player } from '@/types/mlb';
 
 interface SelectedPlayer {
@@ -24,23 +24,28 @@ export default function ParlayBuilderScreen() {
   const { addParlay, isPlayerUsed } = useParlay();
 
   const [games, setGames] = useState<Game[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [selectedBetType, setSelectedBetType] = useState('Hits');
   const [selectedPlayers, setSelectedPlayers] = useState<SelectedPlayer[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadGames = async () => {
+    const loadData = async () => {
       try {
-        const fetchedGames = await fetchGames();
+        const [fetchedGames, fetchedPlayers] = await Promise.all([
+          fetchGames(),
+          getAllPlayersForGames()
+        ]);
         setGames(fetchedGames);
+        setPlayers(fetchedPlayers);
       } catch (error) {
-        console.error('Error loading games:', error);
+        console.error('Error loading data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadGames();
+    loadData();
   }, []);
 
 
@@ -119,7 +124,7 @@ export default function ParlayBuilderScreen() {
           <ThemedText style={[styles.playerPosition, {
             color: Colors[colorScheme ?? 'light'].secondary
           }]}>
-            {player.primaryPosition?.abbreviation}
+            {player.primaryPosition?.name || player.primaryPosition?.code}
           </ThemedText>
         </ThemedView>
 
@@ -187,62 +192,7 @@ export default function ParlayBuilderScreen() {
     </ThemedView>
   );
 
-  const getAllPlayers = (): Player[] => {
-    // For now, return mock data since the MLB API structure is different than expected
-    // The current API response doesn't include player rosters in the schedule endpoint
-    return [
-      {
-        id: "1",
-        fullName: "Mike Trout",
-        primaryPosition: { code: "8", name: "Center Field", type: "Outfielder" }
-      },
-      {
-        id: "2", 
-        fullName: "Shohei Ohtani",
-        primaryPosition: { code: "9", name: "Right Field", type: "Outfielder" }
-      },
-      {
-        id: "3",
-        fullName: "Aaron Judge", 
-        primaryPosition: { code: "9", name: "Right Field", type: "Outfielder" }
-      },
-      {
-        id: "4",
-        fullName: "Juan Soto",
-        primaryPosition: { code: "9", name: "Right Field", type: "Outfielder" }
-      },
-      {
-        id: "5",
-        fullName: "Ronald Acuna Jr.",
-        primaryPosition: { code: "8", name: "Center Field", type: "Outfielder" }
-      },
-      {
-        id: "6",
-        fullName: "Mookie Betts",
-        primaryPosition: { code: "9", name: "Right Field", type: "Outfielder" }
-      },
-      {
-        id: "7",
-        fullName: "Vladimir Guerrero Jr.",
-        primaryPosition: { code: "3", name: "First Base", type: "Infielder" }
-      },
-      {
-        id: "8",
-        fullName: "Jose Altuve",
-        primaryPosition: { code: "4", name: "Second Base", type: "Infielder" }
-      },
-      {
-        id: "9",
-        fullName: "Fernando Tatis Jr.",
-        primaryPosition: { code: "6", name: "Shortstop", type: "Infielder" }
-      },
-      {
-        id: "10",
-        fullName: "Manny Machado",
-        primaryPosition: { code: "5", name: "Third Base", type: "Infielder" }
-      }
-    ];
-  };
+  
 
   return (
     <SafeAreaView style={[styles.container, { 
@@ -308,7 +258,7 @@ export default function ParlayBuilderScreen() {
         </ThemedView>
       ) : (
         <FlatList
-          data={getAllPlayers()}
+          data={players}
           renderItem={renderPlayer}
           keyExtractor={(item) => `${item.id}-${selectedBetType}`}
           contentContainerStyle={styles.listContainer}
