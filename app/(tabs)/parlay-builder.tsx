@@ -26,7 +26,7 @@ const getThresholdOptions = (betType: string) => {
 export default function ParlayBuilderScreen() {
   const [games, setGames] = useState<Game[]>([]);
   const [selectedType, setSelectedType] = useState(PARLAY_TYPES[0]);
-  const [selectedPlayers, setSelectedPlayers] = useState<{player: Player, threshold: string}[]>([]);
+  const [selectedPlayers, setSelectedPlayers] = useState<{player: Player, threshold: string, betType: string}[]>([]);
   const [expandedGames, setExpandedGames] = useState<Set<string>>(new Set());
   const [gameLineups, setGameLineups] = useState<{[key: string]: { home: Player[], away: Player[] }}>({});
   const [loadingLineups, setLoadingLineups] = useState<Set<string>>(new Set());
@@ -96,22 +96,30 @@ export default function ParlayBuilderScreen() {
     if (isPlayerUsed(parseInt(player.id))) return;
     
     setSelectedPlayers(prev => {
-      const existingIndex = prev.findIndex(p => p.player.id === player.id);
+      const existingIndex = prev.findIndex(p => 
+        p.player.id === player.id && p.betType === selectedType.id
+      );
       
       if (existingIndex >= 0) {
-        // Player already selected, update threshold
-        const updated = [...prev];
-        updated[existingIndex] = { player, threshold };
-        return updated;
+        // Player already selected for this bet type
+        if (prev[existingIndex].threshold === threshold) {
+          // Same threshold clicked - unselect
+          return prev.filter((_, index) => index !== existingIndex);
+        } else {
+          // Different threshold - update
+          const updated = [...prev];
+          updated[existingIndex] = { player, threshold, betType: selectedType.id };
+          return updated;
+        }
       } else {
-        // New player selection
-        return [...prev, { player, threshold }];
+        // New player selection for this bet type
+        return [...prev, { player, threshold, betType: selectedType.id }];
       }
     });
   };
 
-  const removePlayer = (playerId: string) => {
-    setSelectedPlayers(prev => prev.filter(p => p.player.id !== playerId));
+  const removePlayer = (playerId: string, betType: string) => {
+    setSelectedPlayers(prev => prev.filter(p => !(p.player.id === playerId && p.betType === betType)));
   };
 
   const saveParlayBet = () => {
@@ -119,7 +127,7 @@ export default function ParlayBuilderScreen() {
     
     const newParlay = {
       id: Date.now().toString(),
-      type: selectedType.name,
+      type: 'Mixed Parlay',
       players: selectedPlayers.map(sp => sp.player),
       odds: '+150',
       amount: 0,
@@ -141,7 +149,9 @@ export default function ParlayBuilderScreen() {
 
   const renderPlayer = (player: Player, teamName: string) => {
     const isUsed = isPlayerUsed(parseInt(player.id));
-    const selectedPlayerData = selectedPlayers.find(p => p.player.id === player.id);
+    const selectedPlayerData = selectedPlayers.find(p => 
+      p.player.id === player.id && p.betType === selectedType.id
+    );
     const isSelected = !!selectedPlayerData;
     const thresholdOptions = getThresholdOptions(selectedType.id);
     
@@ -372,37 +382,40 @@ export default function ParlayBuilderScreen() {
             <ThemedText style={styles.sectionTitle}>
               Selected Players ({selectedPlayers.length})
             </ThemedText>
-            {selectedPlayers.map((playerData) => (
-              <ThemedView
-                key={playerData.player.id}
-                style={[
-                  styles.selectedPlayer,
-                  {
-                    backgroundColor: Colors[colorScheme ?? 'light'].card,
-                    borderColor: Colors[colorScheme ?? 'light'].tint,
-                  }
-                ]}
-              >
-                <ThemedView style={styles.selectedPlayerInfo}>
-                  <ThemedText style={styles.selectedPlayerName}>{playerData.player.fullName}</ThemedText>
-                  <ThemedText style={[
-                    styles.selectedPlayerDetails,
-                    { color: Colors[colorScheme ?? 'light'].secondary }
-                  ]}>
-                    {playerData.threshold} {selectedType.name} • {playerData.player.primaryPosition.name}
-                  </ThemedText>
-                </ThemedView>
-                <TouchableOpacity
+            {selectedPlayers.map((playerData, index) => {
+              const betTypeName = PARLAY_TYPES.find(t => t.id === playerData.betType)?.name || playerData.betType;
+              return (
+                <ThemedView
+                  key={`${playerData.player.id}-${playerData.betType}`}
                   style={[
-                    styles.removeButton,
-                    { backgroundColor: Colors[colorScheme ?? 'light'].error }
+                    styles.selectedPlayer,
+                    {
+                      backgroundColor: Colors[colorScheme ?? 'light'].card,
+                      borderColor: Colors[colorScheme ?? 'light'].tint,
+                    }
                   ]}
-                  onPress={() => removePlayer(playerData.player.id)}
                 >
-                  <ThemedText style={styles.removeButtonText}>×</ThemedText>
-                </TouchableOpacity>
-              </ThemedView>
-            ))}
+                  <ThemedView style={styles.selectedPlayerInfo}>
+                    <ThemedText style={styles.selectedPlayerName}>{playerData.player.fullName}</ThemedText>
+                    <ThemedText style={[
+                      styles.selectedPlayerDetails,
+                      { color: Colors[colorScheme ?? 'light'].secondary }
+                    ]}>
+                      {playerData.threshold} {betTypeName} • {playerData.player.primaryPosition.name}
+                    </ThemedText>
+                  </ThemedView>
+                  <TouchableOpacity
+                    style={[
+                      styles.removeButton,
+                      { backgroundColor: Colors[colorScheme ?? 'light'].error }
+                    ]}
+                    onPress={() => removePlayer(playerData.player.id, playerData.betType)}
+                  >
+                    <ThemedText style={styles.removeButtonText}>×</ThemedText>
+                  </TouchableOpacity>
+                </ThemedView>
+              );
+            })}
 
             <TouchableOpacity
               style={[
