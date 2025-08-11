@@ -35,20 +35,20 @@ export default function ParlaysScreen() {
       </ThemedView>
 
       <ThemedView style={styles.betsContainer}>
-        {parlay.bets.map((bet: any, betIndex: number) => (
+        {(parlay.players || []).map((player: any, playerIndex: number) => (
           <ThemedView 
-            key={betIndex}
+            key={playerIndex}
             style={[styles.betItem, {
               backgroundColor: Colors[colorScheme ?? 'light'].surface,
             }]}
           >
             <ThemedText style={styles.betPlayer}>
-              {bet.player}
+              {player.fullName}
             </ThemedText>
             <ThemedText style={[styles.betDetails, {
               color: Colors[colorScheme ?? 'light'].tint
             }]}>
-              {bet.threshold} {bet.betType}
+              {parlay.type}
             </ThemedText>
           </ThemedView>
         ))}
@@ -58,12 +58,12 @@ export default function ParlaysScreen() {
         <ThemedText style={[styles.parlayDate, {
           color: Colors[colorScheme ?? 'light'].muted
         }]}>
-          Created: {new Date(parlay.createdAt).toLocaleDateString()}
+          Created: {new Date(parlay.created).toLocaleDateString()}
         </ThemedText>
         <ThemedText style={[styles.parlayOdds, {
           color: Colors[colorScheme ?? 'light'].tint
         }]}>
-          {parlay.bets.length} legs
+          {(parlay.players || []).length} players
         </ThemedText>
       </ThemedView>
     </ThemedView>
