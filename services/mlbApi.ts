@@ -143,6 +143,27 @@ export const getRoster = async (teamId: number): Promise<Player[]> => {
   }
 };
 
+export const fetchLineupOrRoster = async (gameId: string) => {
+  try {
+    const game = await axios.get(`${MLB_API_BASE}/game/${gameId}/boxscore`);
+    const homeTeamId = game.data.teams.home.team.id;
+    const awayTeamId = game.data.teams.away.team.id;
+    
+    const [homeLineup, awayLineup] = await Promise.all([
+      getLineup(parseInt(gameId), homeTeamId),
+      getLineup(parseInt(gameId), awayTeamId)
+    ]);
+    
+    return {
+      home: homeLineup,
+      away: awayLineup
+    };
+  } catch (error) {
+    console.error('Error fetching lineup or roster:', error);
+    return null;
+  }
+};
+
 export const getAllPlayersForGames = async (): Promise<Player[]> => {
   try {
     const games = await getSchedule();

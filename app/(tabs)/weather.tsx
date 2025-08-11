@@ -447,8 +447,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   weatherRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   weatherItem: {
     flex: 1,

@@ -1,3 +1,4 @@
+
 import { StyleSheet, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
@@ -7,7 +8,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useParlay } from '@/context/ParlayContext';
-import { fetchGames, getAllPlayersForGames } from '@/services/mlbApi';
+import { fetchGames, getLineup, getRoster } from '@/services/mlbApi';
 import { Game, Player } from '@/types/mlb';
 
 interface SelectedPlayer {
@@ -16,28 +17,59 @@ interface SelectedPlayer {
   threshold: string;
 }
 
+interface GameWithPlayers extends Game {
+  homeTeamPlayers: Player[];
+  awayTeamPlayers: Player[];
+}
+
 const betTypes = ['Hits', 'Total Bases', 'RBIs', 'Runs', 'Strikeouts'];
 const thresholds = ['1+', '2+', '3+', '4+'];
 
 export default function ParlayBuilderScreen() {
   const colorScheme = useColorScheme();
-  const { addParlay, isPlayerUsed } = useParlay();
+  const { addParlay } = useParlay();
 
-  const [games, setGames] = useState<Game[]>([]);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [games, setGames] = useState<GameWithPlayers[]>([]);
   const [selectedBetType, setSelectedBetType] = useState('Hits');
   const [selectedPlayers, setSelectedPlayers] = useState<SelectedPlayer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedGames, setExpandedGames] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [fetchedGames, fetchedPlayers] = await Promise.all([
-          fetchGames(),
-          getAllPlayersForGames()
-        ]);
-        setGames(fetchedGames);
-        setPlayers(fetchedPlayers);
+        const fetchedGames = await fetchGames();
+        
+        const gamesWithPlayers = await Promise.all(
+          fetchedGames.map(async (game) => {
+            try {
+              // Try to get lineups first, fallback to roster
+              const [homeTeamPlayers, awayTeamPlayers] = await Promise.all([
+                getLineup(game.gamePk, game.teams.home.team.id).catch(() => 
+                  getRoster(game.teams.home.team.id)
+                ),
+                getLineup(game.gamePk, game.teams.away.team.id).catch(() => 
+                  getRoster(game.teams.away.team.id)
+                )
+              ]);
+
+              return {
+                ...game,
+                homeTeamPlayers: homeTeamPlayers || [],
+                awayTeamPlayers: awayTeamPlayers || []
+              };
+            } catch (error) {
+              console.error(`Error loading players for game ${game.gamePk}:`, error);
+              return {
+                ...game,
+                homeTeamPlayers: [],
+                awayTeamPlayers: []
+              };
+            }
+          })
+        );
+
+        setGames(gamesWithPlayers);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
@@ -48,11 +80,29 @@ export default function ParlayBuilderScreen() {
     loadData();
   }, []);
 
+  const formatGameTime = (gameDate: string) => {
+    const date = new Date(gameDate);
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZoneName: 'short',
+    });
+  };
 
+  const toggleGameExpansion = (gameId: number) => {
+    setExpandedGames(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(gameId)) {
+        newSet.delete(gameId);
+      } else {
+        newSet.add(gameId);
+      }
+      return newSet;
+    });
+  };
 
   const handlePlayerSelect = (player: Player, threshold: string) => {
-    const key = `${player.id}-${selectedBetType}`;
-
     setSelectedPlayers(prev => {
       const existingIndex = prev.findIndex(p => 
         p.player.id === player.id && p.betType === selectedBetType
@@ -109,14 +159,17 @@ export default function ParlayBuilderScreen() {
     return selection ? selection.threshold : null;
   };
 
-  const renderPlayer = ({ item: player }: { item: Player }) => {
+  const renderPlayer = (player: Player) => {
     const playerSelection = getPlayerSelection(player);
 
     return (
-      <ThemedView style={[styles.playerCard, { 
-        backgroundColor: Colors[colorScheme ?? 'light'].card,
-        borderColor: Colors[colorScheme ?? 'light'].border,
-      }]}>
+      <ThemedView 
+        key={player.id}
+        style={[styles.playerCard, { 
+          backgroundColor: Colors[colorScheme ?? 'light'].surface,
+          borderColor: Colors[colorScheme ?? 'light'].border,
+        }]}
+      >
         <ThemedView style={styles.playerInfo}>
           <ThemedText style={styles.playerName}>
             {player.fullName}
@@ -125,6 +178,7 @@ export default function ParlayBuilderScreen() {
             color: Colors[colorScheme ?? 'light'].secondary
           }]}>
             {player.primaryPosition?.name || player.primaryPosition?.code}
+            {player.battingOrder && ` • #${player.battingOrder}`}
           </ThemedText>
         </ThemedView>
 
@@ -140,7 +194,7 @@ export default function ParlayBuilderScreen() {
                   {
                     backgroundColor: isSelected 
                       ? Colors[colorScheme ?? 'light'].tint 
-                      : Colors[colorScheme ?? 'light'].surface,
+                      : Colors[colorScheme ?? 'light'].card,
                     borderColor: isSelected 
                       ? Colors[colorScheme ?? 'light'].tint 
                       : Colors[colorScheme ?? 'light'].border,
@@ -158,6 +212,81 @@ export default function ParlayBuilderScreen() {
             );
           })}
         </ThemedView>
+      </ThemedView>
+    );
+  };
+
+  const renderTeamSection = (teamName: string, players: Player[]) => {
+    if (players.length === 0) {
+      return (
+        <ThemedView style={styles.teamSection}>
+          <ThemedText style={[styles.teamHeader, {
+            color: Colors[colorScheme ?? 'light'].secondary
+          }]}>
+            {teamName}
+          </ThemedText>
+          <ThemedText style={[styles.noPlayersText, {
+            color: Colors[colorScheme ?? 'light'].muted
+          }]}>
+            No players available
+          </ThemedText>
+        </ThemedView>
+      );
+    }
+
+    return (
+      <ThemedView style={styles.teamSection}>
+        <ThemedText style={[styles.teamHeader, {
+          color: Colors[colorScheme ?? 'light'].secondary
+        }]}>
+          {teamName} ({players.length} players)
+        </ThemedText>
+        {players.map(player => renderPlayer(player))}
+      </ThemedView>
+    );
+  };
+
+  const renderGame = ({ item: game }: { item: GameWithPlayers }) => {
+    const isExpanded = expandedGames.has(game.gamePk);
+    const isGameStarted = game.status.abstractGameState !== 'Preview';
+
+    return (
+      <ThemedView style={[styles.gameCard, { 
+        backgroundColor: Colors[colorScheme ?? 'light'].card,
+        borderColor: Colors[colorScheme ?? 'light'].border,
+      }]}>
+        <TouchableOpacity
+          style={styles.gameHeader}
+          onPress={() => toggleGameExpansion(game.gamePk)}
+        >
+          <ThemedView style={styles.gameInfo}>
+            <ThemedText style={styles.gameTitle}>
+              {game.teams.away.team.name} @ {game.teams.home.team.name}
+            </ThemedText>
+            <ThemedText style={[styles.gameTime, {
+              color: Colors[colorScheme ?? 'light'].secondary
+            }]}>
+              {formatGameTime(game.gameDate)}
+            </ThemedText>
+            <ThemedText style={[styles.gameStatus, {
+              color: isGameStarted ? Colors[colorScheme ?? 'light'].success : Colors[colorScheme ?? 'light'].muted
+            }]}>
+              {game.status.detailedState}
+            </ThemedText>
+          </ThemedView>
+          <ThemedText style={[styles.expandIcon, {
+            color: Colors[colorScheme ?? 'light'].tint
+          }]}>
+            {isExpanded ? '▼' : '▶'}
+          </ThemedText>
+        </TouchableOpacity>
+
+        {isExpanded && (
+          <ThemedView style={styles.gameContent}>
+            {renderTeamSection(game.teams.away.team.name, game.awayTeamPlayers)}
+            {renderTeamSection(game.teams.home.team.name, game.homeTeamPlayers)}
+          </ThemedView>
+        )}
       </ThemedView>
     );
   };
@@ -192,8 +321,6 @@ export default function ParlayBuilderScreen() {
     </ThemedView>
   );
 
-  
-
   return (
     <SafeAreaView style={[styles.container, { 
       backgroundColor: Colors[colorScheme ?? 'light'].background 
@@ -205,7 +332,7 @@ export default function ParlayBuilderScreen() {
         <ThemedText style={[styles.headerSubtitle, {
           color: Colors[colorScheme ?? 'light'].secondary
         }]}>
-          Select players and bet types
+          Select players by game and team
         </ThemedText>
       </ThemedView>
 
@@ -247,20 +374,20 @@ export default function ParlayBuilderScreen() {
         </ScrollView>
       </ThemedView>
 
-      {/* Players List */}
+      {/* Games List */}
       {loading ? (
         <ThemedView style={styles.loadingContainer}>
           <ThemedText style={[styles.loadingText, {
             color: Colors[colorScheme ?? 'light'].secondary
           }]}>
-            Loading players...
+            Loading games and players...
           </ThemedText>
         </ThemedView>
       ) : (
         <FlatList
-          data={players}
-          renderItem={renderPlayer}
-          keyExtractor={(item) => `${item.id}-${selectedBetType}`}
+          data={games}
+          renderItem={renderGame}
+          keyExtractor={(item) => item.gamePk.toString()}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
         />
@@ -345,43 +472,104 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 200,
   },
-  playerCard: {
-    borderRadius: 12,
-    padding: 16,
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  gameCard: {
+    borderRadius: 16,
     marginBottom: 12,
     borderWidth: StyleSheet.hairlineWidth,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowRadius: 8,
     elevation: 2,
   },
+  gameHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
+  gameInfo: {
+    flex: 1,
+  },
+  gameTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  gameTime: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  gameStatus: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  expandIcon: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  gameContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    gap: 16,
+  },
+  teamSection: {
+    gap: 8,
+  },
+  teamHeader: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  noPlayersText: {
+    fontSize: 14,
+    fontWeight: '400',
+    fontStyle: 'italic',
+    paddingVertical: 8,
+  },
+  playerCard: {
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   playerInfo: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
   playerName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     marginBottom: 2,
   },
   playerPosition: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
   },
   thresholdContainer: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   thresholdButton: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 6,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
   },
   thresholdText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
   },
   selectedSection: {
@@ -450,15 +638,5 @@ const styles = StyleSheet.create({
   createParlayButtonText: {
     fontSize: 16,
     fontWeight: '600',
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  loadingText: {
-    fontSize: 16,
-    fontWeight: '500',
   },
 });
