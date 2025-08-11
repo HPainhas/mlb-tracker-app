@@ -57,6 +57,11 @@ export interface MLBLineup {
   players: MLBPlayer[];
 }
 
+export interface LineupOrRoster {
+  home: Player[];
+  away: Player[];
+}
+
 export interface ParlayBet {
   id: string;
   type: '1+ Hit' | '2+ Hits' | '3+ Hits' | '4+ Hits' | '1+ Bases' | '2+ Bases' | '3+ Bases' | 'HR';

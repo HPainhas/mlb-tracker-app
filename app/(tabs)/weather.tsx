@@ -117,7 +117,7 @@ export default function WeatherScreen() {
               { color: Colors[colorScheme ?? "light"].text },
             ]}
           >
-            {player.player.fullName}
+            {player.fullName}
           </ThemedText>
         ))}
         {teamData.length > 5 && (
