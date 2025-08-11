@@ -1,24 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
+
+import { StyleSheet, FlatList, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState, useEffect } from 'react';
+
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { getSchedule } from '@/services/mlbApi';
+import { fetchGames } from '@/services/mlbApi';
 import { Game } from '@/types/mlb';
 
-export default function HomeScreen() {
+export default function GamesScreen() {
+  const colorScheme = useColorScheme();
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const colorScheme = useColorScheme();
 
-  const fetchGames = async () => {
+  const loadGames = async () => {
     try {
-      const gameData = await getSchedule();
-      setGames(gameData);
+      const fetchedGames = await fetchGames();
+      setGames(fetchedGames);
     } catch (error) {
-      console.error('Error fetching games:', error);
+      console.error('Error loading games:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -26,195 +29,172 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
-    fetchGames();
+    loadGames();
   }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchGames();
+    loadGames();
   };
 
-  const renderGame = ({ item }: { item: Game }) => (
-    <ThemedView style={[
-      styles.gameCard,
-      { backgroundColor: Colors[colorScheme ?? 'light'].card }
-    ]}>
+  const renderGame = ({ item: game }: { item: Game }) => (
+    <ThemedView style={[styles.gameCard, { 
+      backgroundColor: Colors[colorScheme ?? 'light'].card,
+      borderColor: Colors[colorScheme ?? 'light'].border,
+    }]}>
       <ThemedView style={styles.gameHeader}>
-        <ThemedText style={styles.gameTeams}>
-          {item.teams.away.team.name} @ {item.teams.home.team.name}
-        </ThemedText>
-        <ThemedText style={[
-          styles.gameStatus,
-          { color: Colors[colorScheme ?? 'light'].secondary }
-        ]}>
-          {item.status.detailedState}
-        </ThemedText>
-      </ThemedView>
-
-      <ThemedView style={styles.gameDetails}>
-        <ThemedText style={[
-          styles.gameTime,
-          { color: Colors[colorScheme ?? 'light'].secondary }
-        ]}>
-          {new Date(item.gameDate).toLocaleTimeString([], { 
+        <ThemedText style={styles.gameTime}>
+          {new Date(game.gameDate).toLocaleTimeString([], { 
             hour: '2-digit', 
             minute: '2-digit' 
           })}
         </ThemedText>
-
-        <ThemedText style={[
-          styles.gameVenue,
-          { color: Colors[colorScheme ?? 'light'].secondary }
-        ]}>
-          {item.venue.name}
+        <ThemedText style={[styles.gameStatus, {
+          color: Colors[colorScheme ?? 'light'].muted
+        }]}>
+          {game.status.abstractGameState}
         </ThemedText>
       </ThemedView>
-
-      {(item.teams.away.score !== undefined || item.teams.home.score !== undefined) && (
-        <ThemedView style={styles.scoreContainer}>
-          <ThemedText style={styles.score}>
-            {item.teams.away.team.abbreviation}: {item.teams.away.score || 0}
+      
+      <ThemedView style={styles.teamsContainer}>
+        <ThemedView style={styles.teamRow}>
+          <ThemedText style={styles.teamName}>
+            {game.teams.away.team.name}
           </ThemedText>
-          <ThemedText style={styles.score}>
-            {item.teams.home.team.abbreviation}: {item.teams.home.score || 0}
+          <ThemedText style={styles.teamScore}>
+            {game.teams.away.score || '0'}
           </ThemedText>
         </ThemedView>
+        
+        <ThemedText style={[styles.vsText, {
+          color: Colors[colorScheme ?? 'light'].muted
+        }]}>
+          vs
+        </ThemedText>
+        
+        <ThemedView style={styles.teamRow}>
+          <ThemedText style={styles.teamName}>
+            {game.teams.home.team.name}
+          </ThemedText>
+          <ThemedText style={styles.teamScore}>
+            {game.teams.home.score || '0'}
+          </ThemedText>
+        </ThemedView>
+      </ThemedView>
+      
+      {game.venue && (
+        <ThemedText style={[styles.venue, {
+          color: Colors[colorScheme ?? 'light'].secondary
+        }]}>
+          {game.venue.name}
+        </ThemedText>
       )}
     </ThemedView>
   );
 
-  if (loading) {
-    return (
-      <ThemedView style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
-        <ThemedText style={[styles.loadingText, { color: Colors[colorScheme ?? 'light'].secondary }]}>
-          Loading today's games...
+  return (
+    <SafeAreaView style={[styles.container, { 
+      backgroundColor: Colors[colorScheme ?? 'light'].background 
+    }]} edges={['top', 'left', 'right']}>
+      <ThemedView style={styles.header}>
+        <ThemedText type="title" style={styles.headerTitle}>
+          Today's Games
         </ThemedText>
       </ThemedView>
-    );
-  }
-
-  return (
-    <ThemedView style={styles.container}>
-      <ThemedText style={styles.header}>Today's Games</ThemedText>
-
-      {games.length === 0 ? (
-        <ThemedView style={styles.centerContent}>
-          <ThemedText style={[styles.emptyText, { color: Colors[colorScheme ?? 'light'].secondary }]}>
-            No games scheduled for today
-          </ThemedText>
-          <TouchableOpacity 
-            style={[styles.refreshButton, { backgroundColor: Colors[colorScheme ?? 'light'].tint }]}
-            onPress={onRefresh}
-          >
-            <ThemedText style={styles.refreshButtonText}>Refresh</ThemedText>
-          </TouchableOpacity>
-        </ThemedView>
-      ) : (
-        <FlatList
-          data={games}
-          keyExtractor={(item) => item.gamePk.toString()}
-          renderItem={renderGame}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-        />
-      )}
-    </ThemedView>
+      
+      <FlatList
+        data={games}
+        renderItem={renderGame}
+        keyExtractor={(item) => item.gamePk.toString()}
+        contentContainerStyle={styles.listContainer}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh}
+            tintColor={Colors[colorScheme ?? 'light'].tint}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
-  },
-  centerContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   header: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#979797',
+  },
+  headerTitle: {
     fontSize: 28,
     fontWeight: '700',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    letterSpacing: -0.5,
   },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '500',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  refreshButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-  },
-  refreshButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  listContent: {
-    paddingBottom: 20,
+  listContainer: {
+    padding: 16,
+    paddingBottom: 100,
   },
   gameCard: {
-    marginHorizontal: 20,
-    marginVertical: 8,
-    padding: 20,
-    borderRadius: 16,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: StyleSheet.hairlineWidth,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   gameHeader: {
-    marginBottom: 12,
-  },
-  gameTeams: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  gameStatus: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  gameDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'center',
+    marginBottom: 12,
   },
   gameTime: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  gameVenue: {
-    fontSize: 14,
+  gameStatus: {
+    fontSize: 12,
     fontWeight: '500',
-    flex: 1,
-    textAlign: 'right',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  scoreContainer: {
+  teamsContainer: {
+    marginBottom: 8,
+  },
+  teamRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
+    alignItems: 'center',
+    paddingVertical: 4,
   },
-  score: {
+  teamName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
+    flex: 1,
+  },
+  teamScore: {
+    fontSize: 16,
+    fontWeight: '700',
+    minWidth: 30,
+    textAlign: 'right',
+  },
+  vsText: {
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '500',
+    paddingVertical: 2,
+  },
+  venue: {
+    fontSize: 12,
+    fontWeight: '400',
+    textAlign: 'center',
   },
 });

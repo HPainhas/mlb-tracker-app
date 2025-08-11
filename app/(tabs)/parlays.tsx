@@ -1,286 +1,226 @@
 
-import React from 'react';
-import { StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { useParlay } from '@/context/ParlayContext';
+import { useParlayContext } from '@/context/ParlayContext';
 
 export default function ParlaysScreen() {
-  const { parlays, removeParlay } = useParlay();
   const colorScheme = useColorScheme();
+  const { parlays, removeParlay } = useParlayContext();
 
-  const confirmDelete = (parlayId: string) => {
-    Alert.alert(
-      'Delete Parlay',
-      'Are you sure you want to delete this parlay?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: () => removeParlay(parlayId)
-        },
-      ]
-    );
-  };
-
-  const renderParlay = ({ item }: { item: any }) => (
-    <ThemedView style={[
-      styles.parlayCard,
-      {
-        backgroundColor: Colors[colorScheme ?? 'light'].card,
-        borderColor: Colors[colorScheme ?? 'light'].border,
-      }
-    ]}>
+  const renderParlay = ({ item: parlay, index }: { item: any; index: number }) => (
+    <ThemedView style={[styles.parlayCard, { 
+      backgroundColor: Colors[colorScheme ?? 'light'].card,
+      borderColor: Colors[colorScheme ?? 'light'].border,
+    }]}>
       <ThemedView style={styles.parlayHeader}>
-        <ThemedView style={styles.parlayInfo}>
-          <ThemedText style={styles.parlayType}>{item.type}</ThemedText>
-          <ThemedText style={[
-            styles.parlayDate,
-            { color: Colors[colorScheme ?? 'light'].secondary }
-          ]}>
-            {new Date(item.createdAt).toLocaleDateString()}
-          </ThemedText>
-        </ThemedView>
+        <ThemedText style={styles.parlayTitle}>
+          Parlay #{index + 1}
+        </ThemedText>
         <TouchableOpacity
-          style={[
-            styles.deleteButton,
-            { backgroundColor: Colors[colorScheme ?? 'light'].error }
-          ]}
-          onPress={() => confirmDelete(item.id)}
+          style={[styles.deleteButton, {
+            backgroundColor: Colors[colorScheme ?? 'light'].error + '20',
+          }]}
+          onPress={() => removeParlay(parlay.id)}
         >
-          <ThemedText style={styles.deleteButtonText}>×</ThemedText>
+          <ThemedText style={[styles.deleteButtonText, {
+            color: Colors[colorScheme ?? 'light'].error
+          }]}>
+            Delete
+          </ThemedText>
         </TouchableOpacity>
       </ThemedView>
-
-      <ThemedView style={styles.playersContainer}>
-        {item.players.map((player: any, index: number) => (
-          <ThemedView key={player.id} style={styles.playerRow}>
-            <ThemedView style={[
-              styles.playerDot,
-              { backgroundColor: Colors[colorScheme ?? 'light'].tint }
-            ]} />
-            <ThemedText style={styles.playerName}>{player.fullName}</ThemedText>
-            <ThemedText style={[
-              styles.playerPosition,
-              { color: Colors[colorScheme ?? 'light'].secondary }
-            ]}>
-              {player.primaryPosition?.name || 'N/A'}
+      
+      <ThemedView style={styles.betsContainer}>
+        {parlay.bets.map((bet: any, betIndex: number) => (
+          <ThemedView 
+            key={betIndex}
+            style={[styles.betItem, {
+              backgroundColor: Colors[colorScheme ?? 'light'].surface,
+            }]}
+          >
+            <ThemedText style={styles.betPlayer}>
+              {bet.player}
+            </ThemedText>
+            <ThemedText style={[styles.betDetails, {
+              color: Colors[colorScheme ?? 'light'].tint
+            }]}>
+              {bet.threshold} {bet.betType}
             </ThemedText>
           </ThemedView>
         ))}
       </ThemedView>
-
+      
       <ThemedView style={styles.parlayFooter}>
-        <ThemedView style={[
-          styles.oddsBadge,
-          { backgroundColor: Colors[colorScheme ?? 'light'].success }
-        ]}>
-          <ThemedText style={styles.oddsText}>{item.odds}</ThemedText>
-        </ThemedView>
-        <ThemedText style={[
-          styles.legCount,
-          { color: Colors[colorScheme ?? 'light'].secondary }
-        ]}>
-          {item.players.length} legs
+        <ThemedText style={[styles.parlayDate, {
+          color: Colors[colorScheme ?? 'light'].muted
+        }]}>
+          Created: {new Date(parlay.createdAt).toLocaleDateString()}
+        </ThemedText>
+        <ThemedText style={[styles.parlayOdds, {
+          color: Colors[colorScheme ?? 'light'].tint
+        }]}>
+          {parlay.bets.length} legs
         </ThemedText>
       </ThemedView>
     </ThemedView>
   );
 
-  if (parlays.length === 0) {
-    return (
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.header}>
-          <ThemedText style={styles.title}>My Parlays</ThemedText>
-          <ThemedText style={[
-            styles.subtitle,
-            { color: Colors[colorScheme ?? 'light'].secondary }
-          ]}>
-            Track your bets and manage selections
-          </ThemedText>
-        </ThemedView>
-        <ThemedView style={styles.emptyContainer}>
-          <ThemedView style={[
-            styles.emptyIcon,
-            { backgroundColor: Colors[colorScheme ?? 'light'].accent }
-          ]}>
-            <ThemedText style={styles.emptyIconText}>📊</ThemedText>
-          </ThemedView>
-          <ThemedText style={styles.emptyTitle}>No Parlays Yet</ThemedText>
-          <ThemedText style={[
-            styles.emptySubtitle,
-            { color: Colors[colorScheme ?? 'light'].secondary }
-          ]}>
-            Start building your first parlay in the Builder tab
-          </ThemedText>
-        </ThemedView>
-      </ThemedView>
-    );
-  }
+  const renderEmptyState = () => (
+    <ThemedView style={styles.emptyContainer}>
+      <ThemedText style={[styles.emptyTitle, {
+        color: Colors[colorScheme ?? 'light'].secondary
+      }]}>
+        No Parlays Yet
+      </ThemedText>
+      <ThemedText style={[styles.emptyMessage, {
+        color: Colors[colorScheme ?? 'light'].muted
+      }]}>
+        Create your first parlay in the Builder tab
+      </ThemedText>
+    </ThemedView>
+  );
 
   return (
-    <ThemedView style={styles.container}>
+    <SafeAreaView style={[styles.container, { 
+      backgroundColor: Colors[colorScheme ?? 'light'].background 
+    }]} edges={['top', 'left', 'right']}>
       <ThemedView style={styles.header}>
-        <ThemedText style={styles.title}>My Parlays</ThemedText>
-        <ThemedText style={[
-          styles.subtitle,
-          { color: Colors[colorScheme ?? 'light'].secondary }
-        ]}>
-          {parlays.length} active {parlays.length === 1 ? 'parlay' : 'parlays'}
+        <ThemedText type="title" style={styles.headerTitle}>
+          My Parlays
+        </ThemedText>
+        <ThemedText style={[styles.headerSubtitle, {
+          color: Colors[colorScheme ?? 'light'].secondary
+        }]}>
+          {parlays.length} saved parlay{parlays.length !== 1 ? 's' : ''}
         </ThemedText>
       </ThemedView>
-
+      
       <FlatList
         data={parlays}
         renderItem={renderParlay}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContainer,
+          parlays.length === 0 && styles.emptyListContainer
+        ]}
+        ListEmptyComponent={renderEmptyState}
         showsVerticalScrollIndicator={false}
       />
-    </ThemedView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
   },
   header: {
     paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#979797',
   },
-  title: {
-    fontSize: 34,
+  headerTitle: {
+    fontSize: 28,
     fontWeight: '700',
-    marginBottom: 4,
+    letterSpacing: -0.5,
   },
-  subtitle: {
+  headerSubtitle: {
     fontSize: 16,
     fontWeight: '400',
+    marginTop: 4,
   },
-  listContent: {
-    paddingHorizontal: 20,
+  listContainer: {
+    padding: 16,
     paddingBottom: 100,
   },
+  emptyListContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  emptyMessage: {
+    fontSize: 16,
+    fontWeight: '400',
+    textAlign: 'center',
+  },
   parlayCard: {
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 16,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
   },
   parlayHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  parlayInfo: {
-    flex: 1,
-  },
-  parlayType: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  parlayDate: {
-    fontSize: 14,
-    fontWeight: '400',
-  },
-  deleteButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 12,
+    marginBottom: 12,
   },
-  deleteButtonText: {
-    color: '#FFFFFF',
+  parlayTitle: {
     fontSize: 18,
     fontWeight: '600',
-    lineHeight: 20,
   },
-  playersContainer: {
-    marginBottom: 16,
+  deleteButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
-  playerRow: {
+  deleteButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  betsContainer: {
+    gap: 8,
+    marginBottom: 12,
+  },
+  betItem: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    padding: 10,
+    borderRadius: 8,
   },
-  playerDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 12,
-  },
-  playerName: {
-    fontSize: 16,
+  betPlayer: {
+    fontSize: 14,
     fontWeight: '500',
     flex: 1,
   },
-  playerPosition: {
-    fontSize: 14,
-    fontWeight: '400',
+  betDetails: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   parlayFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(60, 60, 67, 0.1)',
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#979797',
   },
-  oddsBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  oddsText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  legCount: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 24,
-  },
-  emptyIconText: {
-    fontSize: 36,
-  },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    fontSize: 16,
+  parlayDate: {
+    fontSize: 12,
     fontWeight: '400',
-    textAlign: 'center',
-    lineHeight: 22,
+  },
+  parlayOdds: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
