@@ -10,6 +10,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { useParlay } from '@/context/ParlayContext';
 import { fetchGames, getLineup, getRoster } from '@/services/mlbApi';
 import { Game, Player } from '@/types/mlb';
+import { useBottomTabOverflow } from '@/components/ui/TabBarBackground';
 
 interface SelectedPlayer {
   player: Player;
@@ -28,6 +29,7 @@ const thresholds = ['1+', '2+', '3+', '4+'];
 export default function ParlayBuilderScreen() {
   const colorScheme = useColorScheme();
   const { addParlay } = useParlay();
+  const bottomTabHeight = useBottomTabOverflow();
 
   const [games, setGames] = useState<GameWithPlayers[]>([]);
   const [selectedBetType, setSelectedBetType] = useState('Hits');
@@ -398,6 +400,7 @@ export default function ParlayBuilderScreen() {
         <ThemedView style={[styles.selectedSection, {
           backgroundColor: Colors[colorScheme ?? 'light'].surface,
           borderTopColor: Colors[colorScheme ?? 'light'].border,
+          paddingBottom: bottomTabHeight + 16,
         }]}>
           <ThemedText style={styles.selectedTitle}>
             Selected Players ({selectedPlayers.length})
