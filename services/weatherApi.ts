@@ -38,7 +38,9 @@ const BALLPARK_LOCATIONS: { [key: string]: BallparkLocation } = {
   'Oakland Coliseum': { name: 'Oakland Coliseum', lat: 37.7516, lon: -122.2005 },
   'T-Mobile Park': { name: 'T-Mobile Park', lat: 47.5914, lon: -122.3326 },
   'Globe Life Field': { name: 'Globe Life Field', lat: 32.7473, lon: -97.0814 },
-  'Minute Maid Park': { name: 'Minute Maid Park', lat: 29.757, lon: -95.3553 },
+  'Rate Field': { name: 'Rate Field', lat: 41.83, lon: -87.6338 }, // Guaranteed Rate Field alternate name
+  'Daikin Park': { name: 'Daikin Park', lat: 33.8003, lon: -117.8827 }, // Angel Stadium alternate name
+  'Sutter Health Park': { name: 'Sutter Health Park', lat: 38.5816, lon: -121.4944 }, // Sacramento River Cats stadium
   'Truist Park': { name: 'Truist Park', lat: 33.8906, lon: -84.4677 },
   'LoanDepot park': { name: 'LoanDepot park', lat: 25.7781, lon: -80.2197 },
   'Citi Field': { name: 'Citi Field', lat: 40.7571, lon: -73.8458 },
