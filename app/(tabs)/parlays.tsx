@@ -5,11 +5,11 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { useParlayContext } from '@/context/ParlayContext';
+import { useParlay } from '@/context/ParlayContext';
 
 export default function ParlaysScreen() {
   const colorScheme = useColorScheme();
-  const { parlays, removeParlay } = useParlayContext();
+  const { parlays, removeParlay } = useParlay();
 
   const renderParlay = ({ item: parlay, index }: { item: any; index: number }) => (
     <ThemedView style={[styles.parlayCard, { 
