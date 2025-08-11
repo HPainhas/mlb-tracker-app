@@ -7,7 +7,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { useParlayContext } from '@/context/ParlayContext';
+import { useParlay } from '@/context/ParlayContext';
 import { fetchGames } from '@/services/mlbApi';
 import { Game, Player } from '@/types/mlb';
 
@@ -22,7 +22,7 @@ const thresholds = ['1+', '2+', '3+', '4+'];
 
 export default function ParlayBuilderScreen() {
   const colorScheme = useColorScheme();
-  const { addParlay } = useParlayContext();
+  const { addParlay, isPlayerUsed } = useParlay();
   
   const [games, setGames] = useState<Game[]>([]);
   const [selectedBetType, setSelectedBetType] = useState('Hits');
@@ -44,9 +44,7 @@ export default function ParlayBuilderScreen() {
     loadGames();
   }, []);
 
-  const isPlayerUsed = (playerId: number): boolean => {
-    return selectedPlayers.some(p => parseInt(p.player.id) === playerId);
-  };
+  
 
   const handlePlayerSelect = (player: Player, threshold: string) => {
     const key = `${player.id}-${selectedBetType}`;
