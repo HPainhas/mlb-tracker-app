@@ -49,19 +49,12 @@ const BALLPARK_LOCATIONS: { [key: string]: BallparkLocation } = {
   },
   "T-Mobile Park": { name: "T-Mobile Park", lat: 47.5914, lon: -122.3326 },
   "Globe Life Field": { name: "Globe Life Field", lat: 32.7473, lon: -97.0814 },
-  "Rate Field": { name: "Rate Field", lat: 41.83, lon: -87.6338 }, // Guaranteed Rate Field alternate name
-  "Daikin Park": { name: "Daikin Park", lat: 33.8003, lon: -117.8827 }, // Angel Stadium alternate name
-  "Sutter Health Park": {
-    name: "Sutter Health Park",
-    lat: 38.5816,
-    lon: -121.4944,
-  }, // Sacramento River Cats stadium
   "Truist Park": { name: "Truist Park", lat: 33.8906, lon: -84.4677 },
   "LoanDepot park": { name: "LoanDepot park", lat: 25.7781, lon: -80.2197 },
   "Citi Field": { name: "Citi Field", lat: 40.7571, lon: -73.8458 },
   "Citizens Bank Park": {
     name: "Citizens Bank Park",
-    lat: 39.9061,
+    lat: 39.0961,
     lon: -75.1665,
   },
   "Nationals Park": { name: "Nationals Park", lat: 38.873, lon: -77.0074 },
@@ -95,6 +88,11 @@ export const getWeatherForVenue = async (
       return null;
     }
 
+    if (!OPENWEATHER_API_KEY) {
+      console.error("OpenWeather API key is not set. Please set EXPO_PUBLIC_OPENWEATHER_API_KEY in your secrets.");
+      return null;
+    }
+
     const response = await axios.get(
       `${OPENWEATHER_BASE_URL}/weather?lat=${location.lat}&lon=${location.lon}&appid=${OPENWEATHER_API_KEY}&units=imperial`,
     );
@@ -111,7 +109,15 @@ export const getWeatherForVenue = async (
       icon: data.weather[0]?.icon || "01d",
     };
   } catch (error) {
-    console.error("Error fetching weather data:", error);
+    if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        console.error("Error fetching weather data: Unauthorized. Please check your OpenWeather API key.");
+      } else {
+        console.error("Error fetching weather data:", error.message);
+      }
+    } else {
+      console.error("An unexpected error occurred:", error);
+    }
     return null;
   }
 };
