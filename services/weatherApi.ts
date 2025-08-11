@@ -4,6 +4,8 @@ import axios from "axios";
 const OPENWEATHER_API_KEY = process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY;
 const OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5";
 
+console.log('OpenWeather API Key loaded:', OPENWEATHER_API_KEY ? 'Yes' : 'No');
+
 export interface WeatherData {
   temperature: number;
   humidity: number;
@@ -76,6 +78,10 @@ const BALLPARK_LOCATIONS: { [key: string]: BallparkLocation } = {
   "Dodger Stadium": { name: "Dodger Stadium", lat: 34.0739, lon: -118.24 },
   "Petco Park": { name: "Petco Park", lat: 32.7073, lon: -117.1566 },
   "Oracle Park": { name: "Oracle Park", lat: 37.7786, lon: -122.3893 },
+  // Additional ballpark name variations
+  "Rate Field": { name: "Guaranteed Rate Field", lat: 41.83, lon: -87.6338 },
+  "Daikin Park": { name: "Angel Stadium", lat: 33.8003, lon: -117.8827 },
+  "Sutter Health Park": { name: "Sutter Health Park", lat: 38.5816, lon: -121.4944 },
 };
 
 export const getWeatherForVenue = async (
