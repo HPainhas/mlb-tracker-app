@@ -10,17 +10,23 @@ import { getSchedule, getLineup } from '@/services/mlbApi';
 import { Game, Player } from '@/types/mlb';
 
 const PARLAY_TYPES = [
-  { id: '1hit', name: '1+ Hit', description: 'Player gets 1 or more hits' },
-  { id: '2hit', name: '2+ Hits', description: 'Player gets 2 or more hits' },
-  { id: '1base', name: '1+ Total Bases', description: 'Player gets 1 or more total bases' },
-  { id: '2base', name: '2+ Total Bases', description: 'Player gets 2 or more total bases' },
-  { id: 'hr', name: 'Home Run', description: 'Player hits a home run' },
+  { id: 'hits', name: 'Hits', description: 'Player gets hits' },
+  { id: 'totalbases', name: 'Total Bases', description: 'Player gets total bases' },
+  { id: 'hr', name: 'Home Runs', description: 'Player hits home runs' },
+  { id: 'hrr', name: 'H+R+RBIs', description: 'Player gets hits + runs + RBIs' },
 ];
+
+const getThresholdOptions = (betType: string) => {
+  if (betType === 'totalbases') {
+    return ['2+', '3+', '4+'];
+  }
+  return ['1+', '2+', '3+', '4+'];
+};
 
 export default function ParlayBuilderScreen() {
   const [games, setGames] = useState<Game[]>([]);
   const [selectedType, setSelectedType] = useState(PARLAY_TYPES[0]);
-  const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
+  const [selectedPlayers, setSelectedPlayers] = useState<{player: Player, threshold: string}[]>([]);
   const [expandedGames, setExpandedGames] = useState<Set<string>>(new Set());
   const [gameLineups, setGameLineups] = useState<{[key: string]: { home: Player[], away: Player[] }}>({});
   const [loadingLineups, setLoadingLineups] = useState<Set<string>>(new Set());
@@ -86,14 +92,14 @@ export default function ParlayBuilderScreen() {
     setExpandedGames(newExpanded);
   };
 
-  const handlePlayerSelect = (player: Player) => {
-    if (!selectedPlayers.find(p => p.id === player.id) && !isPlayerUsed(parseInt(player.id))) {
-      setSelectedPlayers(prev => [...prev, player]);
+  const handlePlayerSelect = (player: Player, threshold: string) => {
+    if (!selectedPlayers.find(p => p.player.id === player.id) && !isPlayerUsed(parseInt(player.id))) {
+      setSelectedPlayers(prev => [...prev, { player, threshold }]);
     }
   };
 
   const removePlayer = (playerId: string) => {
-    setSelectedPlayers(prev => prev.filter(p => p.id !== playerId));
+    setSelectedPlayers(prev => prev.filter(p => p.player.id !== playerId));
   };
 
   const saveParlayBet = () => {
@@ -102,7 +108,7 @@ export default function ParlayBuilderScreen() {
     const newParlay = {
       id: Date.now().toString(),
       type: selectedType.name,
-      players: selectedPlayers,
+      players: selectedPlayers.map(sp => sp.player),
       odds: '+150',
       amount: 0,
       createdAt: new Date(),
@@ -123,25 +129,23 @@ export default function ParlayBuilderScreen() {
 
   const renderPlayer = (player: Player, teamName: string) => {
     const isUsed = isPlayerUsed(parseInt(player.id));
-    const isSelected = selectedPlayers.find(p => p.id === player.id);
+    const selectedPlayerData = selectedPlayers.find(p => p.player.id === player.id);
+    const isSelected = !!selectedPlayerData;
+    const thresholdOptions = getThresholdOptions(selectedType.id);
     
     return (
-      <TouchableOpacity
+      <ThemedView
         key={player.id}
         style={[
-          styles.playerRow,
+          styles.playerContainer,
           {
-            backgroundColor: isSelected 
-              ? Colors[colorScheme ?? 'light'].tint + '20'
-              : Colors[colorScheme ?? 'light'].background,
+            backgroundColor: Colors[colorScheme ?? 'light'].card,
             borderColor: isSelected 
               ? Colors[colorScheme ?? 'light'].tint
               : Colors[colorScheme ?? 'light'].border,
             opacity: isUsed ? 0.5 : 1,
           }
         ]}
-        onPress={() => handlePlayerSelect(player)}
-        disabled={isUsed}
       >
         <ThemedView style={styles.playerInfo}>
           <ThemedText style={styles.playerName}>{player.fullName}</ThemedText>
@@ -152,6 +156,7 @@ export default function ParlayBuilderScreen() {
             {teamName} • {player.primaryPosition.name} • #{player.battingOrder || 'Sub'}
           </ThemedText>
         </ThemedView>
+        
         {isUsed && (
           <ThemedView style={[
             styles.usedBadge,
@@ -160,15 +165,38 @@ export default function ParlayBuilderScreen() {
             <ThemedText style={styles.usedText}>Used</ThemedText>
           </ThemedView>
         )}
-        {isSelected && !isUsed && (
-          <ThemedView style={[
-            styles.selectedBadge,
-            { backgroundColor: Colors[colorScheme ?? 'light'].tint }
-          ]}>
-            <ThemedText style={styles.selectedText}>✓</ThemedText>
+        
+        {!isUsed && (
+          <ThemedView style={styles.thresholdButtons}>
+            {thresholdOptions.map((threshold) => (
+              <TouchableOpacity
+                key={threshold}
+                style={[
+                  styles.thresholdButton,
+                  {
+                    backgroundColor: selectedPlayerData?.threshold === threshold
+                      ? Colors[colorScheme ?? 'light'].tint
+                      : Colors[colorScheme ?? 'light'].background,
+                    borderColor: Colors[colorScheme ?? 'light'].border,
+                  }
+                ]}
+                onPress={() => handlePlayerSelect(player, threshold)}
+              >
+                <ThemedText style={[
+                  styles.thresholdButtonText,
+                  {
+                    color: selectedPlayerData?.threshold === threshold
+                      ? '#FFFFFF'
+                      : Colors[colorScheme ?? 'light'].text
+                  }
+                ]}>
+                  {threshold}
+                </ThemedText>
+              </TouchableOpacity>
+            ))}
           </ThemedView>
         )}
-      </TouchableOpacity>
+      </ThemedView>
     );
   };
 
@@ -332,9 +360,9 @@ export default function ParlayBuilderScreen() {
             <ThemedText style={styles.sectionTitle}>
               Selected Players ({selectedPlayers.length})
             </ThemedText>
-            {selectedPlayers.map((player) => (
+            {selectedPlayers.map((playerData) => (
               <ThemedView
-                key={player.id}
+                key={playerData.player.id}
                 style={[
                   styles.selectedPlayer,
                   {
@@ -344,12 +372,12 @@ export default function ParlayBuilderScreen() {
                 ]}
               >
                 <ThemedView style={styles.selectedPlayerInfo}>
-                  <ThemedText style={styles.selectedPlayerName}>{player.fullName}</ThemedText>
+                  <ThemedText style={styles.selectedPlayerName}>{playerData.player.fullName}</ThemedText>
                   <ThemedText style={[
                     styles.selectedPlayerDetails,
                     { color: Colors[colorScheme ?? 'light'].secondary }
                   ]}>
-                    {selectedType.name} • {player.primaryPosition.name}
+                    {playerData.threshold} {selectedType.name} • {playerData.player.primaryPosition.name}
                   </ThemedText>
                 </ThemedView>
                 <TouchableOpacity
@@ -357,7 +385,7 @@ export default function ParlayBuilderScreen() {
                     styles.removeButton,
                     { backgroundColor: Colors[colorScheme ?? 'light'].error }
                   ]}
-                  onPress={() => removePlayer(player.id)}
+                  onPress={() => removePlayer(playerData.player.id)}
                 >
                   <ThemedText style={styles.removeButtonText}>×</ThemedText>
                 </TouchableOpacity>
@@ -468,6 +496,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 4,
   },
+  playerContainer: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
   playerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -577,5 +611,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  thresholdButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+  },
+  thresholdButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    minWidth: 40,
+    alignItems: 'center',
+  },
+  thresholdButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
