@@ -51,6 +51,7 @@ export const getSchedule = async (): Promise<Game[]> => {
 
 export const getLineup = async (gameId: number, teamId: number): Promise<Player[]> => {
   try {
+    // Try boxscore first
     const response = await axios.get(
       `${MLB_API_BASE}/game/${gameId}/boxscore`
     );
@@ -79,9 +80,50 @@ export const getLineup = async (gameId: number, teamId: number): Promise<Player[
       }
     }
     
-    return players.sort((a, b) => (a.battingOrder || 0) - (b.battingOrder || 0));
+    // If no batting order, get all batters from players
+    if (players.length === 0 && teamData.players) {
+      Object.values(teamData.players).forEach((playerData: any) => {
+        if (playerData?.person && playerData?.position?.code !== '1') { // Exclude pitchers
+          players.push({
+            id: playerData.person.id.toString(),
+            fullName: playerData.person.fullName,
+            primaryPosition: {
+              code: playerData.position?.code || '',
+              name: playerData.position?.name || '',
+              type: playerData.position?.type || ''
+            },
+            battingOrder: undefined
+          });
+        }
+      });
+    }
+    
+    return players.sort((a, b) => (a.battingOrder || 99) - (b.battingOrder || 99));
   } catch (error) {
     console.error('Error fetching lineup:', error);
-    return [];
+    // Fallback: try to get roster data
+    try {
+      const rosterResponse = await axios.get(
+        `${MLB_API_BASE}/teams/${teamId}/roster/Active`
+      );
+      
+      const players: Player[] = rosterResponse.data.roster
+        .filter((player: any) => player.position.code !== '1') // Exclude pitchers
+        .map((player: any) => ({
+          id: player.person.id.toString(),
+          fullName: player.person.fullName,
+          primaryPosition: {
+            code: player.position.code,
+            name: player.position.name,
+            type: player.position.type
+          },
+          battingOrder: undefined
+        }));
+      
+      return players;
+    } catch (fallbackError) {
+      console.error('Error fetching roster:', fallbackError);
+      return [];
+    }
   }
 };

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, Modal, FlatList } from 'react-native';
+import { StyleSheet, ScrollView, TouchableOpacity, View, Text } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
@@ -21,10 +21,9 @@ export default function ParlayBuilderScreen() {
   const [games, setGames] = useState<Game[]>([]);
   const [selectedType, setSelectedType] = useState(PARLAY_TYPES[0]);
   const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
-  const [showGameModal, setShowGameModal] = useState(false);
-  const [showPlayerModal, setShowPlayerModal] = useState(false);
-  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
-  const [gameLineups, setGameLineups] = useState<{[key: string]: Player[]}>({});
+  const [expandedGames, setExpandedGames] = useState<Set<string>>(new Set());
+  const [gameLineups, setGameLineups] = useState<{[key: string]: { home: Player[], away: Player[] }}>({});
+  const [loadingLineups, setLoadingLineups] = useState<Set<string>>(new Set());
   const { addParlay, isPlayerUsed } = useParlay();
   const colorScheme = useColorScheme();
 
@@ -41,29 +40,56 @@ export default function ParlayBuilderScreen() {
     }
   };
 
-  const fetchLineup = async (gameId: string) => {
-    if (gameLineups[gameId]) return;
-    
+  const fetchLineup = async (gameId: string, teamId: number) => {
     try {
-      const lineup = await getLineup(gameId);
-      setGameLineups(prev => ({ ...prev, [gameId]: lineup }));
+      const lineup = await getLineup(parseInt(gameId), teamId);
+      return lineup.filter(player => 
+        player.primaryPosition.code !== '1' // Filter out pitchers (code '1')
+      );
     } catch (error) {
       console.error('Error fetching lineup:', error);
+      return [];
     }
   };
 
-  const handleGameSelect = (game: Game) => {
-    setSelectedGame(game);
-    fetchLineup(game.gamePk.toString());
-    setShowGameModal(false);
-    setShowPlayerModal(true);
+  const toggleGameExpansion = async (game: Game) => {
+    const gameId = game.gamePk.toString();
+    const newExpanded = new Set(expandedGames);
+    
+    if (expandedGames.has(gameId)) {
+      newExpanded.delete(gameId);
+    } else {
+      newExpanded.add(gameId);
+      
+      // Fetch lineups if not already loaded
+      if (!gameLineups[gameId]) {
+        setLoadingLineups(prev => new Set(prev).add(gameId));
+        
+        const [homeLineup, awayLineup] = await Promise.all([
+          fetchLineup(gameId, game.teams.home.team.id),
+          fetchLineup(gameId, game.teams.away.team.id)
+        ]);
+        
+        setGameLineups(prev => ({
+          ...prev,
+          [gameId]: { home: homeLineup, away: awayLineup }
+        }));
+        
+        setLoadingLineups(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(gameId);
+          return newSet;
+        });
+      }
+    }
+    
+    setExpandedGames(newExpanded);
   };
 
   const handlePlayerSelect = (player: Player) => {
-    if (!selectedPlayers.find(p => p.id === player.id)) {
+    if (!selectedPlayers.find(p => p.id === player.id) && !isPlayerUsed(parseInt(player.id))) {
       setSelectedPlayers(prev => [...prev, player]);
     }
-    setShowPlayerModal(false);
   };
 
   const removePlayer = (playerId: string) => {
@@ -77,7 +103,7 @@ export default function ParlayBuilderScreen() {
       id: Date.now().toString(),
       type: selectedType.name,
       players: selectedPlayers,
-      odds: '+150', // Placeholder
+      odds: '+150',
       amount: 0,
       createdAt: new Date(),
     };
@@ -86,39 +112,154 @@ export default function ParlayBuilderScreen() {
     setSelectedPlayers([]);
   };
 
-  
+  const formatGameTime = (gameDate: string) => {
+    const date = new Date(gameDate);
+    return date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
 
-  const renderPlayer = ({ item }: { item: Player }) => (
-    <TouchableOpacity
-      style={[
-        styles.playerItem,
-        {
-          backgroundColor: Colors[colorScheme ?? 'light'].card,
-          borderColor: isPlayerUsed(parseInt(item.id)) ? Colors[colorScheme ?? 'light'].error : Colors[colorScheme ?? 'light'].border,
-        }
-      ]}
-      onPress={() => handlePlayerSelect(item)}
-      disabled={isPlayerUsed(parseInt(item.id))}
-    >
-      <ThemedView style={styles.playerInfo}>
-        <ThemedText style={styles.playerName}>{item.fullName}</ThemedText>
-        <ThemedText style={[
-          styles.playerPosition,
-          { color: Colors[colorScheme ?? 'light'].secondary }
-        ]}>
-          {item.primaryPosition.name}
-        </ThemedText>
-      </ThemedView>
-      {isPlayerUsed(parseInt(item.id)) && (
-        <ThemedView style={[
-          styles.usedBadge,
-          { backgroundColor: Colors[colorScheme ?? 'light'].error }
-        ]}>
-          <ThemedText style={styles.usedText}>Used</ThemedText>
+  const renderPlayer = (player: Player, teamName: string) => {
+    const isUsed = isPlayerUsed(parseInt(player.id));
+    const isSelected = selectedPlayers.find(p => p.id === player.id);
+    
+    return (
+      <TouchableOpacity
+        key={player.id}
+        style={[
+          styles.playerRow,
+          {
+            backgroundColor: isSelected 
+              ? Colors[colorScheme ?? 'light'].tint + '20'
+              : Colors[colorScheme ?? 'light'].background,
+            borderColor: isSelected 
+              ? Colors[colorScheme ?? 'light'].tint
+              : Colors[colorScheme ?? 'light'].border,
+            opacity: isUsed ? 0.5 : 1,
+          }
+        ]}
+        onPress={() => handlePlayerSelect(player)}
+        disabled={isUsed}
+      >
+        <ThemedView style={styles.playerInfo}>
+          <ThemedText style={styles.playerName}>{player.fullName}</ThemedText>
+          <ThemedText style={[
+            styles.playerDetails,
+            { color: Colors[colorScheme ?? 'light'].secondary }
+          ]}>
+            {teamName} • {player.primaryPosition.name} • #{player.battingOrder || 'Sub'}
+          </ThemedText>
         </ThemedView>
-      )}
-    </TouchableOpacity>
-  );
+        {isUsed && (
+          <ThemedView style={[
+            styles.usedBadge,
+            { backgroundColor: Colors[colorScheme ?? 'light'].error }
+          ]}>
+            <ThemedText style={styles.usedText}>Used</ThemedText>
+          </ThemedView>
+        )}
+        {isSelected && !isUsed && (
+          <ThemedView style={[
+            styles.selectedBadge,
+            { backgroundColor: Colors[colorScheme ?? 'light'].tint }
+          ]}>
+            <ThemedText style={styles.selectedText}>✓</ThemedText>
+          </ThemedView>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  const renderGameCard = (game: Game) => {
+    const gameId = game.gamePk.toString();
+    const isExpanded = expandedGames.has(gameId);
+    const isLoading = loadingLineups.has(gameId);
+    const lineups = gameLineups[gameId];
+
+    return (
+      <ThemedView
+        key={gameId}
+        style={[
+          styles.gameCard,
+          {
+            backgroundColor: Colors[colorScheme ?? 'light'].card,
+            borderColor: Colors[colorScheme ?? 'light'].border,
+          }
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.gameHeader}
+          onPress={() => toggleGameExpansion(game)}
+        >
+          <ThemedView style={styles.gameInfo}>
+            <ThemedText style={styles.gameTitle}>
+              {game.teams.away.team.name} @ {game.teams.home.team.name}
+            </ThemedText>
+            <ThemedText style={[
+              styles.gameTime,
+              { color: Colors[colorScheme ?? 'light'].secondary }
+            ]}>
+              {formatGameTime(game.gameDate)} • {game.venue.name}
+            </ThemedText>
+          </ThemedView>
+          <ThemedText style={[
+            styles.expandIcon,
+            { color: Colors[colorScheme ?? 'light'].tint }
+          ]}>
+            {isExpanded ? '−' : '+'}
+          </ThemedText>
+        </TouchableOpacity>
+
+        {isExpanded && (
+          <ThemedView style={styles.gameContent}>
+            {isLoading ? (
+              <ThemedView style={styles.loadingContainer}>
+                <ThemedText style={[
+                  styles.loadingText,
+                  { color: Colors[colorScheme ?? 'light'].secondary }
+                ]}>
+                  Loading lineups...
+                </ThemedText>
+              </ThemedView>
+            ) : lineups ? (
+              <>
+                {/* Away Team */}
+                <ThemedView style={styles.teamSection}>
+                  <ThemedText style={styles.teamHeader}>
+                    {game.teams.away.team.name} (Away)
+                  </ThemedText>
+                  {lineups.away.map(player => 
+                    renderPlayer(player, game.teams.away.team.abbreviation)
+                  )}
+                </ThemedView>
+
+                {/* Home Team */}
+                <ThemedView style={styles.teamSection}>
+                  <ThemedText style={styles.teamHeader}>
+                    {game.teams.home.team.name} (Home)
+                  </ThemedText>
+                  {lineups.home.map(player => 
+                    renderPlayer(player, game.teams.home.team.abbreviation)
+                  )}
+                </ThemedView>
+              </>
+            ) : (
+              <ThemedView style={styles.errorContainer}>
+                <ThemedText style={[
+                  styles.errorText,
+                  { color: Colors[colorScheme ?? 'light'].error }
+                ]}>
+                  Unable to load lineups
+                </ThemedText>
+              </ThemedView>
+            )}
+          </ThemedView>
+        )}
+      </ThemedView>
+    );
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -128,7 +269,7 @@ export default function ParlayBuilderScreen() {
           styles.subtitle,
           { color: Colors[colorScheme ?? 'light'].secondary }
         ]}>
-          Create your perfect bet combination
+          Select players from today's games
         </ThemedText>
       </ThemedView>
 
@@ -168,26 +309,29 @@ export default function ParlayBuilderScreen() {
           </ScrollView>
         </ThemedView>
 
-        {/* Add Player Button */}
+        {/* Games Section */}
         <ThemedView style={styles.section}>
-          <TouchableOpacity
-            style={[
-              styles.addButton,
-              { 
-                backgroundColor: Colors[colorScheme ?? 'light'].tint,
-                shadowColor: Colors[colorScheme ?? 'light'].tint,
-              }
-            ]}
-            onPress={() => setShowGameModal(true)}
-          >
-            <ThemedText style={styles.addButtonText}>+ Add Player</ThemedText>
-          </TouchableOpacity>
+          <ThemedText style={styles.sectionTitle}>Today's Games</ThemedText>
+          {games.length === 0 ? (
+            <ThemedView style={styles.emptyContainer}>
+              <ThemedText style={[
+                styles.emptyText,
+                { color: Colors[colorScheme ?? 'light'].secondary }
+              ]}>
+                No games scheduled for today
+              </ThemedText>
+            </ThemedView>
+          ) : (
+            games.map(renderGameCard)
+          )}
         </ThemedView>
 
         {/* Selected Players */}
         {selectedPlayers.length > 0 && (
           <ThemedView style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Selected Players</ThemedText>
+            <ThemedText style={styles.sectionTitle}>
+              Selected Players ({selectedPlayers.length})
+            </ThemedText>
             {selectedPlayers.map((player) => (
               <ThemedView
                 key={player.id}
@@ -195,7 +339,7 @@ export default function ParlayBuilderScreen() {
                   styles.selectedPlayer,
                   {
                     backgroundColor: Colors[colorScheme ?? 'light'].card,
-                    borderColor: Colors[colorScheme ?? 'light'].border,
+                    borderColor: Colors[colorScheme ?? 'light'].tint,
                   }
                 ]}
               >
@@ -219,12 +363,7 @@ export default function ParlayBuilderScreen() {
                 </TouchableOpacity>
               </ThemedView>
             ))}
-          </ThemedView>
-        )}
 
-        {/* Save Parlay Button */}
-        {selectedPlayers.length > 0 && (
-          <ThemedView style={styles.section}>
             <TouchableOpacity
               style={[
                 styles.saveButton,
@@ -232,80 +371,13 @@ export default function ParlayBuilderScreen() {
               ]}
               onPress={saveParlayBet}
             >
-              <ThemedText style={styles.saveButtonText}>Save Parlay ({selectedPlayers.length} legs)</ThemedText>
+              <ThemedText style={styles.saveButtonText}>
+                Save Parlay ({selectedPlayers.length} legs)
+              </ThemedText>
             </TouchableOpacity>
           </ThemedView>
         )}
       </ScrollView>
-
-      {/* Game Selection Modal */}
-      <Modal
-        visible={showGameModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <ThemedView style={styles.modalContainer}>
-          <ThemedView style={styles.modalHeader}>
-            <ThemedText style={styles.modalTitle}>Select Game</ThemedText>
-            <TouchableOpacity onPress={() => setShowGameModal(false)}>
-              <ThemedText style={[
-                styles.modalClose,
-                { color: Colors[colorScheme ?? 'light'].tint }
-              ]}>
-                Done
-              </ThemedText>
-            </TouchableOpacity>
-          </ThemedView>
-          <FlatList
-            data={games}
-            keyExtractor={(item) => item.gamePk.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.gameOption,
-                  {
-                    backgroundColor: Colors[colorScheme ?? 'light'].card,
-                    borderColor: Colors[colorScheme ?? 'light'].border,
-                  }
-                ]}
-                onPress={() => handleGameSelect(item)}
-              >
-                <ThemedText style={styles.gameOptionText}>
-                  {item.teams.away.team.name} @ {item.teams.home.team.name}
-                </ThemedText>
-              </TouchableOpacity>
-            )}
-          />
-        </ThemedView>
-      </Modal>
-
-      {/* Player Selection Modal */}
-      <Modal
-        visible={showPlayerModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <ThemedView style={styles.modalContainer}>
-          <ThemedView style={styles.modalHeader}>
-            <ThemedText style={styles.modalTitle}>Select Player</ThemedText>
-            <TouchableOpacity onPress={() => setShowPlayerModal(false)}>
-              <ThemedText style={[
-                styles.modalClose,
-                { color: Colors[colorScheme ?? 'light'].tint }
-              ]}>
-                Done
-              </ThemedText>
-            </TouchableOpacity>
-          </ThemedView>
-          {selectedGame && (
-            <FlatList
-              data={gameLineups[selectedGame.gamePk.toString()] || []}
-              keyExtractor={(item) => item.id}
-              renderItem={renderPlayer}
-            />
-          )}
-        </ThemedView>
-      </Modal>
     </ThemedView>
   );
 }
@@ -354,27 +426,120 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  addButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  gameCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 16,
+    overflow: 'hidden',
   },
-  addButtonText: {
-    color: '#FFFFFF',
+  gameHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+  },
+  gameInfo: {
+    flex: 1,
+  },
+  gameTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  gameTime: {
+    fontSize: 14,
+    fontWeight: '400',
+  },
+  expandIcon: {
+    fontSize: 24,
+    fontWeight: '600',
+    width: 24,
+    textAlign: 'center',
+  },
+  gameContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  teamSection: {
+    marginBottom: 20,
+  },
+  teamHeader: {
     fontSize: 16,
     fontWeight: '600',
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  playerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  playerInfo: {
+    flex: 1,
+  },
+  playerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  playerDetails: {
+    fontSize: 13,
+    fontWeight: '400',
+  },
+  usedBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  usedText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  selectedBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 14,
+    fontWeight: '400',
+  },
+  errorContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 14,
+    fontWeight: '400',
+  },
+  emptyContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    fontWeight: '400',
   },
   selectedPlayer: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 2,
     marginBottom: 8,
   },
   selectedPlayerInfo: {
@@ -406,73 +571,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: 'center',
+    marginTop: 16,
   },
   saveButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-  },
-  modalContainer: {
-    flex: 1,
-    paddingTop: 60,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  modalClose: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  gameOption: {
-    padding: 16,
-    marginHorizontal: 20,
-    marginVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  gameOptionText: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  playerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    marginHorizontal: 20,
-    marginVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  playerInfo: {
-    flex: 1,
-  },
-  playerName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  playerPosition: {
-    fontSize: 14,
-    fontWeight: '400',
-  },
-  usedBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  usedText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '500',
   },
 });
