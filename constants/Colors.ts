@@ -1,26 +1,34 @@
+
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * GitHub-inspired dark theme for MLB Parlay Tracker
  */
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+const tintColorLight = '#238636';
+const tintColorDark = '#56d364';
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
+    text: '#1f2328',
+    background: '#ffffff',
     tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
+    icon: '#656d76',
+    tabIconDefault: '#656d76',
     tabIconSelected: tintColorLight,
+    card: '#f6f8fa',
+    border: '#d0d7de',
+    error: '#cf222e',
+    success: '#1a7f37',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
+    text: '#f0f6fc',
+    background: '#0d1117',
     tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
+    icon: '#7d8590',
+    tabIconDefault: '#7d8590',
     tabIconSelected: tintColorDark,
+    card: '#161b22',
+    border: '#30363d',
+    error: '#f85149',
+    success: '#56d364',
   },
 };
