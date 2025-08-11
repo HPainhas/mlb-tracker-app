@@ -1,34 +1,39 @@
 
 /**
- * GitHub-inspired dark theme for MLB Parlay Tracker
+ * Apple-inspired color scheme for MLB Parlay Tracker
+ * Clean, premium aesthetic with whites, blacks, and space grays
  */
 
-const tintColorLight = '#238636';
-const tintColorDark = '#56d364';
+const tintColorLight = '#007AFF';
+const tintColorDark = '#0A84FF';
 
 export const Colors = {
   light: {
-    text: '#1f2328',
-    background: '#ffffff',
+    text: '#1D1D1F',
+    background: '#FFFFFF',
     tint: tintColorLight,
-    icon: '#656d76',
-    tabIconDefault: '#656d76',
+    icon: '#8E8E93',
+    tabIconDefault: '#8E8E93',
     tabIconSelected: tintColorLight,
-    card: '#f6f8fa',
-    border: '#d0d7de',
-    error: '#cf222e',
-    success: '#1a7f37',
+    card: '#F2F2F7',
+    border: '#D1D1D6',
+    error: '#FF3B30',
+    success: '#34C759',
+    secondary: '#6D6D70',
+    accent: '#F2F2F7',
   },
   dark: {
-    text: '#f0f6fc',
-    background: '#0d1117',
+    text: '#F2F2F7',
+    background: '#000000',
     tint: tintColorDark,
-    icon: '#7d8590',
-    tabIconDefault: '#7d8590',
+    icon: '#8E8E93',
+    tabIconDefault: '#8E8E93',
     tabIconSelected: tintColorDark,
-    card: '#161b22',
-    border: '#30363d',
-    error: '#f85149',
-    success: '#56d364',
+    card: '#1C1C1E',
+    border: '#38383A',
+    error: '#FF453A',
+    success: '#30D158',
+    secondary: '#98989D',
+    accent: '#2C2C2E',
   },
 };

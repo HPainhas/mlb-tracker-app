@@ -1,65 +1,95 @@
 
 import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, RefreshControl, Alert } from 'react-native';
+import { StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { MLBGame } from '@/types/mlb';
-import { MLBApiService } from '@/services/mlbApi';
-import { Collapsible } from '@/components/Collapsible';
+import { getSchedule } from '@/services/mlbApi';
+import { Game } from '@/types/mlb';
 
-export default function GamesScreen() {
-  const [games, setGames] = useState<MLBGame[]>([]);
+export default function HomeScreen() {
+  const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const colorScheme = useColorScheme() ?? 'dark';
-
-  useEffect(() => {
-    fetchGames();
-  }, []);
+  const colorScheme = useColorScheme();
 
   const fetchGames = async () => {
     try {
-      const todaysGames = await MLBApiService.getTodaysGames();
-      setGames(todaysGames);
+      const gameData = await getSchedule();
+      setGames(gameData);
     } catch (error) {
-      Alert.alert('Error', 'Failed to fetch games');
+      console.error('Error fetching games:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
+  useEffect(() => {
+    fetchGames();
+  }, []);
+
   const onRefresh = () => {
     setRefreshing(true);
     fetchGames();
   };
 
-  const formatGameTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZoneName: 'short'
-    });
-  };
-
-  const getGameStatus = (game: MLBGame) => {
-    if (game.status.abstractGameState === 'Final') {
-      return `Final: ${game.teams.away.score} - ${game.teams.home.score}`;
-    } else if (game.status.abstractGameState === 'Live') {
-      return `Live: ${game.teams.away.score} - ${game.teams.home.score}`;
-    } else {
-      return formatGameTime(game.gameDate);
-    }
-  };
+  const renderGame = ({ item }: { item: Game }) => (
+    <ThemedView style={[
+      styles.gameCard, 
+      { 
+        backgroundColor: Colors[colorScheme ?? 'light'].card,
+        borderColor: Colors[colorScheme ?? 'light'].border,
+      }
+    ]}>
+      <ThemedView style={styles.gameHeader}>
+        <ThemedText style={styles.gameTime}>{item.gameDate}</ThemedText>
+        <ThemedView style={[
+          styles.statusBadge,
+          { backgroundColor: Colors[colorScheme ?? 'light'].accent }
+        ]}>
+          <ThemedText style={styles.statusText}>{item.status.abstractGameState}</ThemedText>
+        </ThemedView>
+      </ThemedView>
+      
+      <ThemedView style={styles.teamsContainer}>
+        <ThemedView style={styles.teamSection}>
+          <ThemedText style={styles.teamName}>{item.teams.away.team.name}</ThemedText>
+          <ThemedText style={styles.teamRecord}>
+            ({item.teams.away.leagueRecord.wins}-{item.teams.away.leagueRecord.losses})
+          </ThemedText>
+        </ThemedView>
+        
+        <ThemedText style={styles.vsText}>@</ThemedText>
+        
+        <ThemedView style={styles.teamSection}>
+          <ThemedText style={styles.teamName}>{item.teams.home.team.name}</ThemedText>
+          <ThemedText style={styles.teamRecord}>
+            ({item.teams.home.leagueRecord.wins}-{item.teams.home.leagueRecord.losses})
+          </ThemedText>
+        </ThemedView>
+      </ThemedView>
+      
+      <ThemedView style={styles.venueContainer}>
+        <ThemedText style={[
+          styles.venueText,
+          { color: Colors[colorScheme ?? 'light'].secondary }
+        ]}>
+          {item.venue.name}
+        </ThemedText>
+      </ThemedView>
+    </ThemedView>
+  );
 
   if (loading) {
     return (
       <ThemedView style={styles.container}>
+        <ThemedView style={styles.header}>
+          <ThemedText style={styles.title}>Today's Games</ThemedText>
+        </ThemedView>
         <ThemedView style={styles.loadingContainer}>
-          <ThemedText type="title">Loading Today's Games...</ThemedText>
+          <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
         </ThemedView>
       </ThemedView>
     );
@@ -67,68 +97,30 @@ export default function GamesScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
+      <ThemedView style={styles.header}>
+        <ThemedText style={styles.title}>Today's Games</ThemedText>
+        <ThemedText style={[
+          styles.subtitle,
+          { color: Colors[colorScheme ?? 'light'].secondary }
+        ]}>
+          {games.length} games scheduled
+        </ThemedText>
+      </ThemedView>
+      
+      <FlatList
+        data={games}
+        renderItem={renderGame}
+        keyExtractor={(item) => item.gamePk.toString()}
+        contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors[colorScheme ?? 'light'].tint}
+          />
         }
-      >
-        <ThemedView style={styles.header}>
-          <ThemedText type="title">Today's MLB Games</ThemedText>
-          <ThemedText style={styles.subtitle}>
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
-          </ThemedText>
-        </ThemedView>
-
-        {games.length === 0 ? (
-          <ThemedView style={styles.noGamesContainer}>
-            <ThemedText type="subtitle">No games scheduled today</ThemedText>
-          </ThemedView>
-        ) : (
-          games.map((game) => (
-            <ThemedView 
-              key={game.gamePk} 
-              style={[
-                styles.gameCard,
-                { 
-                  backgroundColor: Colors[colorScheme].card,
-                  borderColor: Colors[colorScheme].border
-                }
-              ]}
-            >
-              <ThemedView style={styles.gameHeader}>
-                <ThemedView style={styles.teamsContainer}>
-                  <ThemedText type="defaultSemiBold" style={styles.teamName}>
-                    {game.teams.away.team.name}
-                  </ThemedText>
-                  <ThemedText style={styles.vs}>@</ThemedText>
-                  <ThemedText type="defaultSemiBold" style={styles.teamName}>
-                    {game.teams.home.team.name}
-                  </ThemedText>
-                </ThemedView>
-                <ThemedText style={styles.gameStatus}>
-                  {getGameStatus(game)}
-                </ThemedText>
-              </ThemedView>
-              
-              <ThemedText style={styles.venue}>
-                {game.venue.name}
-              </ThemedText>
-
-              <Collapsible title="View Lineups">
-                <ThemedText style={styles.comingSoon}>
-                  Lineups will be available here
-                </ThemedText>
-              </Collapsible>
-            </ThemedView>
-          ))
-        )}
-      </ScrollView>
+        showsVerticalScrollIndicator={false}
+      />
     </ThemedView>
   );
 }
@@ -136,63 +128,88 @@ export default function GamesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 60,
   },
-  scrollView: {
+  header: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 34,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: '400',
+  },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
+  gameCard: {
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  gameHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  gameTime: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  teamsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  teamSection: {
     flex: 1,
+  },
+  teamName: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  teamRecord: {
+    fontSize: 14,
+    fontWeight: '400',
+  },
+  vsText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginHorizontal: 16,
+  },
+  venueContainer: {
+    alignItems: 'center',
+  },
+  venueText: {
+    fontSize: 14,
+    fontWeight: '400',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  header: {
-    padding: 20,
-    paddingBottom: 10,
-  },
-  subtitle: {
-    marginTop: 5,
-    opacity: 0.7,
-  },
-  noGamesContainer: {
-    padding: 40,
-    alignItems: 'center',
-  },
-  gameCard: {
-    margin: 16,
-    marginVertical: 8,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  gameHeader: {
-    marginBottom: 8,
-  },
-  teamsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  teamName: {
-    fontSize: 16,
-  },
-  vs: {
-    marginHorizontal: 12,
-    opacity: 0.7,
-  },
-  gameStatus: {
-    textAlign: 'center',
-    opacity: 0.8,
-  },
-  venue: {
-    textAlign: 'center',
-    fontSize: 12,
-    opacity: 0.6,
-    marginBottom: 12,
-  },
-  comingSoon: {
-    textAlign: 'center',
-    fontStyle: 'italic',
-    opacity: 0.6,
   },
 });

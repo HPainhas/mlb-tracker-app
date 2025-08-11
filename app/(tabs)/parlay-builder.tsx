@@ -1,30 +1,32 @@
 
 import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, ScrollView, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { MLBGame, MLBPlayer, ParlayBet } from '@/types/mlb';
-import { MLBApiService } from '@/services/mlbApi';
-import { useParlay } from '@/context/ParlayContext';
-import { Collapsible } from '@/components/Collapsible';
+import { useParlayContext } from '@/context/ParlayContext';
+import { getSchedule, getLineup } from '@/services/mlbApi';
+import { Game, Player } from '@/types/mlb';
 
 const PARLAY_TYPES = [
-  '1+ Hit', '2+ Hits', '3+ Hits', '4+ Hits',
-  '1+ Bases', '2+ Bases', '3+ Bases', 'HR'
-] as const;
+  { id: '1hit', name: '1+ Hit', description: 'Player gets 1 or more hits' },
+  { id: '2hit', name: '2+ Hits', description: 'Player gets 2 or more hits' },
+  { id: '1base', name: '1+ Total Bases', description: 'Player gets 1 or more total bases' },
+  { id: '2base', name: '2+ Total Bases', description: 'Player gets 2 or more total bases' },
+  { id: 'hr', name: 'Home Run', description: 'Player hits a home run' },
+];
 
 export default function ParlayBuilderScreen() {
-  const [games, setGames] = useState<MLBGame[]>([]);
-  const [selectedType, setSelectedType] = useState<typeof PARLAY_TYPES[number]>('1+ Hit');
-  const [selectedPlayers, setSelectedPlayers] = useState<MLBPlayer[]>([]);
-  const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
-  const [lineups, setLineups] = useState<{[key: string]: MLBPlayer[]}>({});
-  const [loading, setLoading] = useState(true);
-  
-  const { addParlay, isPlayerUsed } = useParlay();
-  const colorScheme = useColorScheme() ?? 'dark';
+  const [games, setGames] = useState<Game[]>([]);
+  const [selectedType, setSelectedType] = useState(PARLAY_TYPES[0]);
+  const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
+  const [showGameModal, setShowGameModal] = useState(false);
+  const [showPlayerModal, setShowPlayerModal] = useState(false);
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const [gameLineups, setGameLineups] = useState<{[key: string]: Player[]}>({});
+  const { addParlay, usedPlayers } = useParlayContext();
+  const colorScheme = useColorScheme();
 
   useEffect(() => {
     fetchGames();
@@ -32,237 +34,280 @@ export default function ParlayBuilderScreen() {
 
   const fetchGames = async () => {
     try {
-      const todaysGames = await MLBApiService.getTodaysGames();
-      setGames(todaysGames.filter(game => 
-        game.status.abstractGameState === 'Preview' || 
-        game.status.abstractGameState === 'Live'
-      ));
+      const gameData = await getSchedule();
+      setGames(gameData);
     } catch (error) {
-      Alert.alert('Error', 'Failed to fetch games');
-    } finally {
-      setLoading(false);
+      console.error('Error fetching games:', error);
     }
   };
 
-  const fetchLineup = async (gameId: number, teamId: number) => {
-    const key = `${gameId}-${teamId}`;
-    if (lineups[key]) return lineups[key];
-
+  const fetchLineup = async (gameId: string) => {
+    if (gameLineups[gameId]) return;
+    
     try {
-      const lineup = await MLBApiService.getGameLineup(gameId, teamId);
-      setLineups(prev => ({ ...prev, [key]: lineup }));
-      return lineup;
+      const lineup = await getLineup(gameId);
+      setGameLineups(prev => ({ ...prev, [gameId]: lineup }));
     } catch (error) {
       console.error('Error fetching lineup:', error);
-      return [];
     }
   };
 
-  const togglePlayer = (player: MLBPlayer, gameId: number) => {
-    const isSelected = selectedPlayers.some(p => p.id === player.id);
-    
-    if (isSelected) {
-      setSelectedPlayers(prev => prev.filter(p => p.id !== player.id));
-    } else {
-      if (selectedGameId && selectedGameId !== gameId) {
-        Alert.alert('Different Game', 'You can only select players from one game per parlay.');
-        return;
-      }
-      
+  const handleGameSelect = (game: Game) => {
+    setSelectedGame(game);
+    fetchLineup(game.gamePk.toString());
+    setShowGameModal(false);
+    setShowPlayerModal(true);
+  };
+
+  const handlePlayerSelect = (player: Player) => {
+    if (!selectedPlayers.find(p => p.id === player.id)) {
       setSelectedPlayers(prev => [...prev, player]);
-      setSelectedGameId(gameId);
     }
+    setShowPlayerModal(false);
   };
 
-  const createParlay = () => {
-    if (selectedPlayers.length === 0) {
-      Alert.alert('No Players', 'Please select at least one player.');
-      return;
-    }
+  const removePlayer = (playerId: string) => {
+    setSelectedPlayers(prev => prev.filter(p => p.id !== playerId));
+  };
 
-    const parlay: ParlayBet = {
+  const saveParlayBet = () => {
+    if (selectedPlayers.length === 0) return;
+    
+    const newParlay = {
       id: Date.now().toString(),
-      type: selectedType,
+      type: selectedType.name,
       players: selectedPlayers,
-      gameId: selectedGameId!,
-      created: new Date().toISOString(),
+      odds: '+150', // Placeholder
+      amount: 0,
+      createdAt: new Date(),
     };
-
-    addParlay(parlay);
     
-    // Reset selections
+    addParlay(newParlay);
     setSelectedPlayers([]);
-    setSelectedGameId(null);
-    
-    Alert.alert('Success', `Parlay created with ${selectedPlayers.length} player(s)!`);
   };
 
-  const PlayerItem = ({ player, gameId }: { player: MLBPlayer; gameId: number }) => {
-    const isSelected = selectedPlayers.some(p => p.id === player.id);
-    const isUsed = isPlayerUsed(player.id);
-    
-    return (
-      <TouchableOpacity
-        style={[
-          styles.playerItem,
-          {
-            backgroundColor: Colors[colorScheme].card,
-            borderColor: isSelected 
-              ? Colors[colorScheme].success 
-              : isUsed 
-                ? Colors[colorScheme].error 
-                : Colors[colorScheme].border,
-            borderWidth: isSelected || isUsed ? 2 : 1,
-          }
-        ]}
-        onPress={() => togglePlayer(player, gameId)}
-      >
-        <ThemedView style={styles.playerInfo}>
-          <ThemedText type="defaultSemiBold">{player.fullName}</ThemedText>
-          <ThemedText style={styles.playerPosition}>
-            {player.position.name} {player.battingOrder ? `(#${player.battingOrder})` : ''}
-          </ThemedText>
-        </ThemedView>
-        {isUsed && (
-          <ThemedText style={[styles.usedIndicator, { color: Colors[colorScheme].error }]}>
-            Used
-          </ThemedText>
-        )}
-        {isSelected && (
-          <ThemedText style={[styles.selectedIndicator, { color: Colors[colorScheme].success }]}>
-            ✓
-          </ThemedText>
-        )}
-      </TouchableOpacity>
-    );
+  const isPlayerUsed = (playerId: string) => {
+    return usedPlayers.includes(playerId);
   };
 
-  if (loading) {
-    return (
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.loadingContainer}>
-          <ThemedText type="title">Loading Games...</ThemedText>
-        </ThemedView>
+  const renderPlayer = ({ item }: { item: Player }) => (
+    <TouchableOpacity
+      style={[
+        styles.playerItem,
+        {
+          backgroundColor: Colors[colorScheme ?? 'light'].card,
+          borderColor: isPlayerUsed(item.id) ? Colors[colorScheme ?? 'light'].error : Colors[colorScheme ?? 'light'].border,
+        }
+      ]}
+      onPress={() => handlePlayerSelect(item)}
+      disabled={isPlayerUsed(item.id)}
+    >
+      <ThemedView style={styles.playerInfo}>
+        <ThemedText style={styles.playerName}>{item.fullName}</ThemedText>
+        <ThemedText style={[
+          styles.playerPosition,
+          { color: Colors[colorScheme ?? 'light'].secondary }
+        ]}>
+          {item.primaryPosition.name}
+        </ThemedText>
       </ThemedView>
-    );
-  }
+      {isPlayerUsed(item.id) && (
+        <ThemedView style={[
+          styles.usedBadge,
+          { backgroundColor: Colors[colorScheme ?? 'light'].error }
+        ]}>
+          <ThemedText style={styles.usedText}>Used</ThemedText>
+        </ThemedView>
+      )}
+    </TouchableOpacity>
+  );
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <ThemedView style={styles.header}>
-          <ThemedText type="title">Parlay Builder</ThemedText>
-          
-          {/* Parlay Type Selector */}
-          <ThemedView style={styles.typeSelector}>
-            <ThemedText type="subtitle" style={styles.sectionTitle}>Bet Type</ThemedText>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <ThemedView style={styles.typeButtons}>
-                {PARLAY_TYPES.map((type) => (
-                  <TouchableOpacity
-                    key={type}
-                    style={[
-                      styles.typeButton,
-                      {
-                        backgroundColor: selectedType === type 
-                          ? Colors[colorScheme].tint 
-                          : Colors[colorScheme].card,
-                        borderColor: Colors[colorScheme].border,
-                      }
-                    ]}
-                    onPress={() => setSelectedType(type)}
-                  >
-                    <ThemedText 
-                      style={[
-                        styles.typeButtonText,
-                        { color: selectedType === type ? '#000' : Colors[colorScheme].text }
-                      ]}
-                    >
-                      {type}
-                    </ThemedText>
-                  </TouchableOpacity>
-                ))}
-              </ThemedView>
-            </ScrollView>
-          </ThemedView>
+      <ThemedView style={styles.header}>
+        <ThemedText style={styles.title}>Build Parlay</ThemedText>
+        <ThemedText style={[
+          styles.subtitle,
+          { color: Colors[colorScheme ?? 'light'].secondary }
+        ]}>
+          Create your perfect bet combination
+        </ThemedText>
+      </ThemedView>
 
-          {/* Selected Players */}
-          {selectedPlayers.length > 0 && (
-            <ThemedView style={styles.selectedSection}>
-              <ThemedText type="subtitle">Selected Players ({selectedPlayers.length})</ThemedText>
-              {selectedPlayers.map((player) => (
-                <ThemedText key={player.id} style={styles.selectedPlayer}>
-                  • {player.fullName}
-                </ThemedText>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Parlay Type Selection */}
+        <ThemedView style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Bet Type</ThemedText>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <ThemedView style={styles.typeContainer}>
+              {PARLAY_TYPES.map((type) => (
+                <TouchableOpacity
+                  key={type.id}
+                  style={[
+                    styles.typeButton,
+                    {
+                      backgroundColor: selectedType.id === type.id 
+                        ? Colors[colorScheme ?? 'light'].tint 
+                        : Colors[colorScheme ?? 'light'].card,
+                      borderColor: Colors[colorScheme ?? 'light'].border,
+                    }
+                  ]}
+                  onPress={() => setSelectedType(type)}
+                >
+                  <ThemedText style={[
+                    styles.typeButtonText,
+                    {
+                      color: selectedType.id === type.id 
+                        ? '#FFFFFF'
+                        : Colors[colorScheme ?? 'light'].text
+                    }
+                  ]}>
+                    {type.name}
+                  </ThemedText>
+                </TouchableOpacity>
               ))}
+            </ThemedView>
+          </ScrollView>
+        </ThemedView>
+
+        {/* Add Player Button */}
+        <ThemedView style={styles.section}>
+          <TouchableOpacity
+            style={[
+              styles.addButton,
+              { 
+                backgroundColor: Colors[colorScheme ?? 'light'].tint,
+                shadowColor: Colors[colorScheme ?? 'light'].tint,
+              }
+            ]}
+            onPress={() => setShowGameModal(true)}
+          >
+            <ThemedText style={styles.addButtonText}>+ Add Player</ThemedText>
+          </TouchableOpacity>
+        </ThemedView>
+
+        {/* Selected Players */}
+        {selectedPlayers.length > 0 && (
+          <ThemedView style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Selected Players</ThemedText>
+            {selectedPlayers.map((player) => (
+              <ThemedView
+                key={player.id}
+                style={[
+                  styles.selectedPlayer,
+                  {
+                    backgroundColor: Colors[colorScheme ?? 'light'].card,
+                    borderColor: Colors[colorScheme ?? 'light'].border,
+                  }
+                ]}
+              >
+                <ThemedView style={styles.selectedPlayerInfo}>
+                  <ThemedText style={styles.selectedPlayerName}>{player.fullName}</ThemedText>
+                  <ThemedText style={[
+                    styles.selectedPlayerDetails,
+                    { color: Colors[colorScheme ?? 'light'].secondary }
+                  ]}>
+                    {selectedType.name} • {player.primaryPosition.name}
+                  </ThemedText>
+                </ThemedView>
+                <TouchableOpacity
+                  style={[
+                    styles.removeButton,
+                    { backgroundColor: Colors[colorScheme ?? 'light'].error }
+                  ]}
+                  onPress={() => removePlayer(player.id)}
+                >
+                  <ThemedText style={styles.removeButtonText}>×</ThemedText>
+                </TouchableOpacity>
+              </ThemedView>
+            ))}
+          </ThemedView>
+        )}
+
+        {/* Save Parlay Button */}
+        {selectedPlayers.length > 0 && (
+          <ThemedView style={styles.section}>
+            <TouchableOpacity
+              style={[
+                styles.saveButton,
+                { backgroundColor: Colors[colorScheme ?? 'light'].success }
+              ]}
+              onPress={saveParlayBet}
+            >
+              <ThemedText style={styles.saveButtonText}>Save Parlay ({selectedPlayers.length} legs)</ThemedText>
+            </TouchableOpacity>
+          </ThemedView>
+        )}
+      </ScrollView>
+
+      {/* Game Selection Modal */}
+      <Modal
+        visible={showGameModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <ThemedView style={styles.modalContainer}>
+          <ThemedView style={styles.modalHeader}>
+            <ThemedText style={styles.modalTitle}>Select Game</ThemedText>
+            <TouchableOpacity onPress={() => setShowGameModal(false)}>
+              <ThemedText style={[
+                styles.modalClose,
+                { color: Colors[colorScheme ?? 'light'].tint }
+              ]}>
+                Done
+              </ThemedText>
+            </TouchableOpacity>
+          </ThemedView>
+          <FlatList
+            data={games}
+            keyExtractor={(item) => item.gamePk.toString()}
+            renderItem={({ item }) => (
               <TouchableOpacity
                 style={[
-                  styles.createButton,
-                  { backgroundColor: Colors[colorScheme].success }
+                  styles.gameOption,
+                  {
+                    backgroundColor: Colors[colorScheme ?? 'light'].card,
+                    borderColor: Colors[colorScheme ?? 'light'].border,
+                  }
                 ]}
-                onPress={createParlay}
+                onPress={() => handleGameSelect(item)}
               >
-                <ThemedText style={styles.createButtonText}>
-                  Create {selectedType} Parlay
+                <ThemedText style={styles.gameOptionText}>
+                  {item.teams.away.team.name} @ {item.teams.home.team.name}
                 </ThemedText>
               </TouchableOpacity>
-            </ThemedView>
+            )}
+          />
+        </ThemedView>
+      </Modal>
+
+      {/* Player Selection Modal */}
+      <Modal
+        visible={showPlayerModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <ThemedView style={styles.modalContainer}>
+          <ThemedView style={styles.modalHeader}>
+            <ThemedText style={styles.modalTitle}>Select Player</ThemedText>
+            <TouchableOpacity onPress={() => setShowPlayerModal(false)}>
+              <ThemedText style={[
+                styles.modalClose,
+                { color: Colors[colorScheme ?? 'light'].tint }
+              ]}>
+                Done
+              </ThemedText>
+            </TouchableOpacity>
+          </ThemedView>
+          {selectedGame && (
+            <FlatList
+              data={gameLineups[selectedGame.gamePk.toString()] || []}
+              keyExtractor={(item) => item.id}
+              renderItem={renderPlayer}
+            />
           )}
         </ThemedView>
-
-        {/* Games List */}
-        <ThemedView style={styles.gamesSection}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>Select Players</ThemedText>
-          
-          {games.length === 0 ? (
-            <ThemedView style={styles.noGamesContainer}>
-              <ThemedText>No games available for betting</ThemedText>
-            </ThemedView>
-          ) : (
-            games.map((game) => (
-              <ThemedView key={game.gamePk} style={styles.gameSection}>
-                <Collapsible 
-                  title={`${game.teams.away.team.name} @ ${game.teams.home.team.name}`}
-                >
-                  <ThemedView style={styles.teamsContainer}>
-                    {/* Away Team */}
-                    <ThemedView style={styles.teamSection}>
-                      <ThemedText type="defaultSemiBold" style={styles.teamHeader}>
-                        {game.teams.away.team.name}
-                      </ThemedText>
-                      <TouchableOpacity
-                        style={styles.loadLineupButton}
-                        onPress={() => fetchLineup(game.gamePk, game.teams.away.team.id)}
-                      >
-                        <ThemedText style={styles.loadLineupText}>Load Lineup</ThemedText>
-                      </TouchableOpacity>
-                      {lineups[`${game.gamePk}-${game.teams.away.team.id}`]?.map((player) => (
-                        <PlayerItem key={player.id} player={player} gameId={game.gamePk} />
-                      ))}
-                    </ThemedView>
-
-                    {/* Home Team */}
-                    <ThemedView style={styles.teamSection}>
-                      <ThemedText type="defaultSemiBold" style={styles.teamHeader}>
-                        {game.teams.home.team.name}
-                      </ThemedText>
-                      <TouchableOpacity
-                        style={styles.loadLineupButton}
-                        onPress={() => fetchLineup(game.gamePk, game.teams.home.team.id)}
-                      >
-                        <ThemedText style={styles.loadLineupText}>Load Lineup</ThemedText>
-                      </TouchableOpacity>
-                      {lineups[`${game.gamePk}-${game.teams.home.team.id}`]?.map((player) => (
-                        <PlayerItem key={player.id} player={player} gameId={game.gamePk} />
-                      ))}
-                    </ThemedView>
-                  </ThemedView>
-                </Collapsible>
-              </ThemedView>
-            ))
-          )}
-        </ThemedView>
-      </ScrollView>
+      </Modal>
     </ThemedView>
   );
 }
@@ -270,31 +315,40 @@ export default function ParlayBuilderScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingTop: 60,
   },
   header: {
-    padding: 20,
+    paddingHorizontal: 20,
+    marginBottom: 24,
   },
-  typeSelector: {
-    marginTop: 20,
+  title: {
+    fontSize: 34,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: '400',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  section: {
+    marginBottom: 32,
   },
   sectionTitle: {
-    marginBottom: 10,
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 12,
   },
-  typeButtons: {
+  typeContainer: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
   },
   typeButton: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
   },
@@ -302,83 +356,125 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  selectedSection: {
-    marginTop: 20,
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#30363d',
+  addButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   selectedPlayer: {
-    marginLeft: 8,
-    marginVertical: 2,
-  },
-  createButton: {
-    marginTop: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  createButtonText: {
-    color: '#000',
-    fontWeight: 'bold',
-  },
-  gamesSection: {
-    padding: 20,
-    paddingTop: 0,
-  },
-  gameSection: {
-    marginBottom: 16,
-  },
-  noGamesContainer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  teamsContainer: {
-    gap: 16,
-  },
-  teamSection: {
-    gap: 8,
-  },
-  teamHeader: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  loadLineupButton: {
-    padding: 8,
-    borderRadius: 6,
+    padding: 16,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#30363d',
-    alignItems: 'center',
     marginBottom: 8,
   },
-  loadLineupText: {
-    fontSize: 12,
-    opacity: 0.8,
+  selectedPlayerInfo: {
+    flex: 1,
   },
-  playerItem: {
+  selectedPlayerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  selectedPlayerDetails: {
+    fontSize: 14,
+    fontWeight: '400',
+  },
+  removeButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  saveButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalContainer: {
+    flex: 1,
+    paddingTop: 60,
+  },
+  modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  modalClose: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  gameOption: {
+    padding: 16,
+    marginHorizontal: 20,
+    marginVertical: 4,
     borderRadius: 8,
-    marginBottom: 4,
+    borderWidth: 1,
+  },
+  gameOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  playerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    marginHorizontal: 20,
+    marginVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
   },
   playerInfo: {
     flex: 1,
   },
-  playerPosition: {
-    fontSize: 12,
-    opacity: 0.7,
-    marginTop: 2,
-  },
-  usedIndicator: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  selectedIndicator: {
+  playerName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  playerPosition: {
+    fontSize: 14,
+    fontWeight: '400',
+  },
+  usedBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  usedText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
