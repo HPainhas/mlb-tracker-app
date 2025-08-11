@@ -6,6 +6,7 @@ import { ParlayBet, MLBPlayer } from '../types/mlb';
 interface ParlayContextType {
   parlays: ParlayBet[];
   usedPlayerIds: Set<number>;
+  isLoading: boolean;
   addParlay: (parlay: ParlayBet) => void;
   removeParlay: (parlayId: string) => void;
   isPlayerUsed: (playerId: number) => boolean;
@@ -16,6 +17,7 @@ const ParlayContext = createContext<ParlayContextType | undefined>(undefined);
 export function ParlayProvider({ children }: { children: React.ReactNode }) {
   const [parlays, setParlays] = useState<ParlayBet[]>([]);
   const [usedPlayerIds, setUsedPlayerIds] = useState<Set<number>>(new Set());
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadParlays();
@@ -33,12 +35,19 @@ export function ParlayProvider({ children }: { children: React.ReactNode }) {
 
   const loadParlays = async () => {
     try {
+      setIsLoading(true);
       const stored = await AsyncStorage.getItem('parlays');
       if (stored) {
-        setParlays(JSON.parse(stored));
+        const parsedParlays = JSON.parse(stored);
+        setParlays(Array.isArray(parsedParlays) ? parsedParlays : []);
+      } else {
+        setParlays([]);
       }
     } catch (error) {
       console.error('Error loading parlays:', error);
+      setParlays([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -68,8 +77,9 @@ export function ParlayProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ParlayContext.Provider value={{
-      parlays,
+      parlays: parlays || [],
       usedPlayerIds,
+      isLoading,
       addParlay,
       removeParlay,
       isPlayerUsed

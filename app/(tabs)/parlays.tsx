@@ -9,7 +9,7 @@ import { useParlay } from '@/context/ParlayContext';
 
 export default function ParlaysScreen() {
   const colorScheme = useColorScheme();
-  const { parlays, removeParlay } = useParlay();
+  const { parlays, removeParlay, isLoading } = useParlay();
 
   const renderParlay = ({ item: parlay, index }: { item: any; index: number }) => (
     <ThemedView style={[styles.parlayCard, { 
@@ -99,17 +99,27 @@ export default function ParlaysScreen() {
         </ThemedText>
       </ThemedView>
 
-      <FlatList
-        data={parlays}
-        renderItem={renderParlay}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={[
-          styles.listContainer,
-          parlays.length === 0 && styles.emptyListContainer
-        ]}
-        ListEmptyComponent={renderEmptyState}
-        showsVerticalScrollIndicator={false}
-      />
+      {isLoading ? (
+        <ThemedView style={styles.emptyContainer}>
+          <ThemedText style={[styles.emptyTitle, {
+            color: Colors[colorScheme ?? 'light'].secondary
+          }]}>
+            Loading...
+          </ThemedText>
+        </ThemedView>
+      ) : (
+        <FlatList
+          data={parlays || []}
+          renderItem={renderParlay}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[
+            styles.listContainer,
+            (!parlays || parlays.length === 0) && styles.emptyListContainer
+          ]}
+          ListEmptyComponent={renderEmptyState}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </SafeAreaView>
   );
 }
