@@ -107,7 +107,7 @@ export default function GamesScreen() {
 
     return (
       <ThemedView style={styles.lineupContainer}>
-        {teamData.slice(0, 5).map((player, index) => (
+        {teamData.map((player, index) => (
           <ThemedText
             key={index}
             style={[
@@ -118,16 +118,6 @@ export default function GamesScreen() {
             {player.fullName}
           </ThemedText>
         ))}
-        {teamData.length > 5 && (
-          <ThemedText
-            style={[
-              styles.morePlayersText,
-              { color: Colors[colorScheme ?? "light"].muted },
-            ]}
-          >
-            ... and {teamData.length - 5} more
-          </ThemedText>
-        )}
       </ThemedView>
     );
   };
