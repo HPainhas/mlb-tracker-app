@@ -77,6 +77,26 @@ export default function ParlayBuilderScreen() {
     );
   };
 
+  const createParlay = () => {
+    if (selectedPlayers.length === 0) return;
+
+    const parlay = {
+      id: Date.now().toString(),
+      type: selectedBetType as any,
+      players: selectedPlayers.map(sp => ({
+        id: parseInt(sp.player.id),
+        fullName: sp.player.fullName,
+        position: sp.player.primaryPosition || { code: '', name: '', type: '' },
+        battingOrder: undefined
+      })),
+      gameId: 1, // Mock game ID
+      created: new Date().toISOString(),
+    };
+
+    addParlay(parlay);
+    setSelectedPlayers([]);
+  };
+
   const getPlayerSelection = (player: Player): string | null => {
     const selection = selectedPlayers.find(p => 
       p.player.id === player.id && p.betType === selectedBetType
@@ -168,37 +188,60 @@ export default function ParlayBuilderScreen() {
   );
 
   const getAllPlayers = (): Player[] => {
-    const allPlayers: Player[] = [];
-
-    games.forEach(game => {
-      if (game.teams.home.players) {
-        Object.values(game.teams.home.players).forEach(player => {
-          if (player.person) {
-            allPlayers.push({
-              id: player.person.id.toString(),
-              fullName: player.person.fullName,
-              primaryPosition: player.position || null,
-            });
-          }
-        });
+    // For now, return mock data since the MLB API structure is different than expected
+    // The current API response doesn't include player rosters in the schedule endpoint
+    return [
+      {
+        id: "1",
+        fullName: "Mike Trout",
+        primaryPosition: { code: "8", name: "Center Field", type: "Outfielder" }
+      },
+      {
+        id: "2", 
+        fullName: "Shohei Ohtani",
+        primaryPosition: { code: "9", name: "Right Field", type: "Outfielder" }
+      },
+      {
+        id: "3",
+        fullName: "Aaron Judge", 
+        primaryPosition: { code: "9", name: "Right Field", type: "Outfielder" }
+      },
+      {
+        id: "4",
+        fullName: "Juan Soto",
+        primaryPosition: { code: "9", name: "Right Field", type: "Outfielder" }
+      },
+      {
+        id: "5",
+        fullName: "Ronald Acuna Jr.",
+        primaryPosition: { code: "8", name: "Center Field", type: "Outfielder" }
+      },
+      {
+        id: "6",
+        fullName: "Mookie Betts",
+        primaryPosition: { code: "9", name: "Right Field", type: "Outfielder" }
+      },
+      {
+        id: "7",
+        fullName: "Vladimir Guerrero Jr.",
+        primaryPosition: { code: "3", name: "First Base", type: "Infielder" }
+      },
+      {
+        id: "8",
+        fullName: "Jose Altuve",
+        primaryPosition: { code: "4", name: "Second Base", type: "Infielder" }
+      },
+      {
+        id: "9",
+        fullName: "Fernando Tatis Jr.",
+        primaryPosition: { code: "6", name: "Shortstop", type: "Infielder" }
+      },
+      {
+        id: "10",
+        fullName: "Manny Machado",
+        primaryPosition: { code: "5", name: "Third Base", type: "Infielder" }
       }
-
-      if (game.teams.away.players) {
-        Object.values(game.teams.away.players).forEach(player => {
-          if (player.person) {
-            allPlayers.push({
-              id: player.person.id.toString(),
-              fullName: player.person.fullName,
-              primaryPosition: player.position || null,
-            });
-          }
-        });
-      }
-    });
-
-    return allPlayers.filter((player, index, self) => 
-      index === self.findIndex(p => p.id === player.id)
-    );
+    ];
   };
 
   return (
@@ -255,13 +298,23 @@ export default function ParlayBuilderScreen() {
       </ThemedView>
 
       {/* Players List */}
-      <FlatList
-        data={getAllPlayers()}
-        renderItem={renderPlayer}
-        keyExtractor={(item) => `${item.id}-${selectedBetType}`}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <ThemedView style={styles.loadingContainer}>
+          <ThemedText style={[styles.loadingText, {
+            color: Colors[colorScheme ?? 'light'].secondary
+          }]}>
+            Loading players...
+          </ThemedText>
+        </ThemedView>
+      ) : (
+        <FlatList
+          data={getAllPlayers()}
+          renderItem={renderPlayer}
+          keyExtractor={(item) => `${item.id}-${selectedBetType}`}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
       {/* Selected Players */}
       {selectedPlayers.length > 0 && (
@@ -280,6 +333,19 @@ export default function ParlayBuilderScreen() {
             style={styles.selectedList}
             showsVerticalScrollIndicator={false}
           />
+
+          <TouchableOpacity
+            style={[styles.createParlayButton, {
+              backgroundColor: Colors[colorScheme ?? 'light'].tint,
+            }]}
+            onPress={createParlay}
+          >
+            <ThemedText style={[styles.createParlayButtonText, {
+              color: '#ffffff'
+            }]}>
+              Create Parlay ({selectedPlayers.length} players)
+            </ThemedText>
+          </TouchableOpacity>
         </ThemedView>
       )}
     </SafeAreaView>
@@ -422,5 +488,27 @@ const styles = StyleSheet.create({
   removeButtonText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  createParlayButton: {
+    marginHorizontal: 20,
+    marginVertical: 16,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  createParlayButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
