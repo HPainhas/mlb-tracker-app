@@ -36,6 +36,7 @@ export default function ParlayBuilderScreen() {
   const [selectedPlayers, setSelectedPlayers] = useState<SelectedPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedGames, setExpandedGames] = useState<Set<number>>(new Set());
+  const [isSelectedExpanded, setIsSelectedExpanded] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -397,22 +398,52 @@ export default function ParlayBuilderScreen() {
 
       {/* Selected Players */}
       {selectedPlayers.length > 0 && (
-        <ThemedView style={[styles.selectedSection, {
-          backgroundColor: Colors[colorScheme ?? 'light'].surface,
-          borderTopColor: Colors[colorScheme ?? 'light'].border,
-          paddingBottom: bottomTabHeight + 16,
-        }]}>
-          <ThemedText style={styles.selectedTitle}>
-            Selected Players ({selectedPlayers.length})
-          </ThemedText>
+        <ThemedView style={[
+          styles.selectedSection, 
+          {
+            backgroundColor: Colors[colorScheme ?? 'light'].surface,
+            borderTopColor: Colors[colorScheme ?? 'light'].border,
+            paddingBottom: bottomTabHeight + 16,
+            maxHeight: isSelectedExpanded ? '50%' : undefined,
+          }
+        ]}>
+          <TouchableOpacity
+            style={styles.selectedHeader}
+            onPress={() => selectedPlayers.length > 2 && setIsSelectedExpanded(!isSelectedExpanded)}
+            disabled={selectedPlayers.length <= 2}
+          >
+            <ThemedText style={styles.selectedTitle}>
+              Selected Players ({selectedPlayers.length})
+            </ThemedText>
+            {selectedPlayers.length > 2 && (
+              <ThemedText style={[styles.expandIcon, {
+                color: Colors[colorScheme ?? 'light'].tint
+              }]}>
+                {isSelectedExpanded ? '▼' : '▲'}
+              </ThemedText>
+            )}
+          </TouchableOpacity>
 
           <FlatList
-            data={selectedPlayers}
+            data={isSelectedExpanded ? selectedPlayers : selectedPlayers.slice(0, 2)}
             renderItem={renderSelectedPlayer}
             keyExtractor={(item) => `${item.player.id}-${item.betType}`}
-            style={styles.selectedList}
+            style={[styles.selectedList, { flex: isSelectedExpanded ? 1 : undefined }]}
             showsVerticalScrollIndicator={false}
           />
+
+          {selectedPlayers.length > 2 && !isSelectedExpanded && (
+            <TouchableOpacity
+              style={styles.showMoreButton}
+              onPress={() => setIsSelectedExpanded(true)}
+            >
+              <ThemedText style={[styles.showMoreText, {
+                color: Colors[colorScheme ?? 'light'].tint
+              }]}>
+                Show {selectedPlayers.length - 2} more players
+              </ThemedText>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={[styles.createParlayButton, {
@@ -581,7 +612,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    maxHeight: 200,
+    minHeight: 140,
     paddingTop: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -591,11 +622,25 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
+  selectedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
   selectedTitle: {
     fontSize: 18,
     fontWeight: '600',
+  },
+  showMoreButton: {
     paddingHorizontal: 20,
-    marginBottom: 12,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  showMoreText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   selectedList: {
     paddingHorizontal: 20,
