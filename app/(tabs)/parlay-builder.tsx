@@ -93,9 +93,21 @@ export default function ParlayBuilderScreen() {
   };
 
   const handlePlayerSelect = (player: Player, threshold: string) => {
-    if (!selectedPlayers.find(p => p.player.id === player.id) && !isPlayerUsed(parseInt(player.id))) {
-      setSelectedPlayers(prev => [...prev, { player, threshold }]);
-    }
+    if (isPlayerUsed(parseInt(player.id))) return;
+    
+    setSelectedPlayers(prev => {
+      const existingIndex = prev.findIndex(p => p.player.id === player.id);
+      
+      if (existingIndex >= 0) {
+        // Player already selected, update threshold
+        const updated = [...prev];
+        updated[existingIndex] = { player, threshold };
+        return updated;
+      } else {
+        // New player selection
+        return [...prev, { player, threshold }];
+      }
+    });
   };
 
   const removePlayer = (playerId: string) => {
