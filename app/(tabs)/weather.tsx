@@ -11,17 +11,16 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { fetchGames, fetchLineupOrRoster } from "@/services/mlbApi";
+import { fetchGames } from "@/services/mlbApi";
 import {
   getWeatherForVenue,
   getWindDirectionText,
   WeatherData,
 } from "@/services/weatherApi";
-import { Game, LineupOrRoster } from "@/types/mlb";
+import { Game } from "@/types/mlb";
 
 interface GameWithDetails extends Game {
   weather?: WeatherData | null;
-  lineupOrRoster?: LineupOrRoster | null;
 }
 
 const formatGameTime = (gameDate: string): string => {
@@ -51,10 +50,7 @@ export default function WeatherScreen() {
         const weather = game.venue?.name
           ? await getWeatherForVenue(game.venue.name)
           : null;
-        const lineupOrRoster = await fetchLineupOrRoster(
-          game.gamePk.toString(),
-        );
-        return { ...game, weather, lineupOrRoster };
+        return { ...game, weather };
       });
 
       const gamesWithDetailsData = await Promise.all(gamesWithDetailsPromises);
@@ -76,63 +72,7 @@ export default function WeatherScreen() {
     loadGameDetails();
   };
 
-  const renderLineupOrRoster = (
-    lineupOrRoster: LineupOrRoster | null | undefined,
-    team: "away" | "home",
-  ) => {
-    if (!lineupOrRoster) {
-      return (
-        <ThemedText
-          style={[
-            styles.noLineupText,
-            { color: Colors[colorScheme ?? "light"].muted },
-          ]}
-        >
-          No lineup data available
-        </ThemedText>
-      );
-    }
-
-    const teamData = lineupOrRoster[team];
-    if (!teamData || teamData.length === 0) {
-      return (
-        <ThemedText
-          style={[
-            styles.noLineupText,
-            { color: Colors[colorScheme ?? "light"].muted },
-          ]}
-        >
-          No roster data available
-        </ThemedText>
-      );
-    }
-
-    return (
-      <ThemedView style={styles.lineupContainer}>
-        {teamData.slice(0, 5).map((player, index) => (
-          <ThemedText
-            key={index}
-            style={[
-              styles.playerText,
-              { color: Colors[colorScheme ?? "light"].text },
-            ]}
-          >
-            {player.fullName}
-          </ThemedText>
-        ))}
-        {teamData.length > 5 && (
-          <ThemedText
-            style={[
-              styles.morePlayersText,
-              { color: Colors[colorScheme ?? "light"].muted },
-            ]}
-          >
-            ... and {teamData.length - 5} more
-          </ThemedText>
-        )}
-      </ThemedView>
-    );
-  };
+  
 
   const renderWeatherCard = ({ item: game }: { item: GameWithDetails }) => (
     <ThemedView
@@ -269,40 +209,7 @@ export default function WeatherScreen() {
         </ThemedView>
       )}
 
-      <ThemedView style={styles.lineupSection}>
-        <ThemedText
-          style={[
-            styles.lineupTitle,
-            { color: Colors[colorScheme ?? "light"].text },
-          ]}
-        >
-          Lineups
-        </ThemedText>
-        <ThemedView style={styles.teamsContainer}>
-          <ThemedView style={styles.teamContainer}>
-            <ThemedText
-              style={[
-                styles.teamName,
-                { color: Colors[colorScheme ?? "light"].secondary },
-              ]}
-            >
-              Away Team
-            </ThemedText>
-            {renderLineupOrRoster(game.lineupOrRoster, "away")}
-          </ThemedView>
-          <ThemedView style={styles.teamContainer}>
-            <ThemedText
-              style={[
-                styles.teamName,
-                { color: Colors[colorScheme ?? "light"].secondary },
-              ]}
-            >
-              Home Team
-            </ThemedText>
-            {renderLineupOrRoster(game.lineupOrRoster, "home")}
-          </ThemedView>
-        </ThemedView>
-      </ThemedView>
+      
     </ThemedView>
   );
 
@@ -481,43 +388,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
-  lineupSection: {
-    marginTop: 20,
-    paddingTop: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  lineupTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 12,
-  },
-  teamsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 16,
-  },
-  teamContainer: {
-    flex: 1,
-  },
-  teamName: {
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: 8,
-  },
-  lineupContainer: {
-    gap: 4,
-  },
-  playerText: {
-    fontSize: 12,
-    fontWeight: "400",
-  },
-  noLineupText: {
-    fontSize: 12,
-    fontWeight: "400",
-  },
-  morePlayersText: {
-    fontSize: 12,
-    fontWeight: "400",
-    fontStyle: "italic",
-  },
+  
 });

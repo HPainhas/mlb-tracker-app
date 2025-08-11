@@ -1,4 +1,4 @@
-import { StyleSheet, FlatList, RefreshControl } from 'react-native';
+import { StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 
@@ -6,8 +6,12 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { fetchGames } from '@/services/mlbApi';
-import { Game } from '@/types/mlb';
+import { fetchGames, fetchLineupOrRoster } from '@/services/mlbApi';
+import { Game, LineupOrRoster } from '@/types/mlb';
+
+interface GameWithLineup extends Game {
+  lineupOrRoster?: LineupOrRoster | null;
+}
 
 // Helper function to format game time with timezone
 const formatGameTime = (gameDate: string) => {
@@ -23,14 +27,24 @@ const formatGameTime = (gameDate: string) => {
 
 export default function GamesScreen() {
   const colorScheme = useColorScheme();
-  const [games, setGames] = useState<Game[]>([]);
+  const [games, setGames] = useState<GameWithLineup[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [expandedGames, setExpandedGames] = useState<Set<number>>(new Set());
 
   const loadGames = async () => {
     try {
       const fetchedGames = await fetchGames();
-      setGames(fetchedGames);
+      
+      const gamesWithLineupPromises = fetchedGames.map(async (game) => {
+        const lineupOrRoster = await fetchLineupOrRoster(
+          game.gamePk.toString(),
+        );
+        return { ...game, lineupOrRoster };
+      });
+
+      const gamesWithLineupData = await Promise.all(gamesWithLineupPromises);
+      setGames(gamesWithLineupData);
     } catch (error) {
       console.error('Error loading games:', error);
     } finally {
@@ -48,8 +62,79 @@ export default function GamesScreen() {
     loadGames();
   };
 
-  const renderGame = ({ item: game }: { item: Game }) => {
+  const toggleGameExpansion = (gameId: number) => {
+    setExpandedGames(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(gameId)) {
+        newSet.delete(gameId);
+      } else {
+        newSet.add(gameId);
+      }
+      return newSet;
+    });
+  };
+
+  const renderLineupOrRoster = (
+    lineupOrRoster: LineupOrRoster | null | undefined,
+    team: "away" | "home",
+  ) => {
+    if (!lineupOrRoster) {
+      return (
+        <ThemedText
+          style={[
+            styles.noLineupText,
+            { color: Colors[colorScheme ?? "light"].muted },
+          ]}
+        >
+          No lineup data available
+        </ThemedText>
+      );
+    }
+
+    const teamData = lineupOrRoster[team];
+    if (!teamData || teamData.length === 0) {
+      return (
+        <ThemedText
+          style={[
+            styles.noLineupText,
+            { color: Colors[colorScheme ?? "light"].muted },
+          ]}
+        >
+          No roster data available
+        </ThemedText>
+      );
+    }
+
+    return (
+      <ThemedView style={styles.lineupContainer}>
+        {teamData.slice(0, 5).map((player, index) => (
+          <ThemedText
+            key={index}
+            style={[
+              styles.playerText,
+              { color: Colors[colorScheme ?? "light"].text },
+            ]}
+          >
+            {player.fullName}
+          </ThemedText>
+        ))}
+        {teamData.length > 5 && (
+          <ThemedText
+            style={[
+              styles.morePlayersText,
+              { color: Colors[colorScheme ?? "light"].muted },
+            ]}
+          >
+            ... and {teamData.length - 5} more
+          </ThemedText>
+        )}
+      </ThemedView>
+    );
+  };
+
+  const renderGame = ({ item: game }: { item: GameWithLineup }) => {
     const isGameStarted = game.status.abstractGameState !== 'Preview';
+    const isExpanded = expandedGames.has(game.gamePk);
 
     return (
       <ThemedView style={[styles.gameCard, { 
@@ -108,11 +193,53 @@ export default function GamesScreen() {
         </ThemedView>
 
         {game.venue && (
-          <ThemedText style={[styles.venue, {
-            color: Colors[colorScheme ?? 'light'].secondary
+          <ThemedView style={styles.venueContainer}>
+            <ThemedText style={[styles.venue, {
+              color: Colors[colorScheme ?? 'light'].secondary
+            }]}>
+              {game.venue.name}
+            </ThemedText>
+            <TouchableOpacity
+              style={styles.expandButton}
+              onPress={() => toggleGameExpansion(game.gamePk)}
+            >
+              <ThemedText style={[styles.expandButtonText, {
+                color: Colors[colorScheme ?? 'light'].tint
+              }]}>
+                {isExpanded ? 'Hide Lineups' : 'Show Lineups'}
+              </ThemedText>
+            </TouchableOpacity>
+          </ThemedView>
+        )}
+
+        {isExpanded && (
+          <ThemedView style={[styles.lineupSection, {
+            borderTopColor: Colors[colorScheme ?? 'light'].border,
           }]}>
-            {game.venue.name}
-          </ThemedText>
+            <ThemedText style={[styles.lineupTitle, {
+              color: Colors[colorScheme ?? 'light'].text,
+            }]}>
+              Lineups
+            </ThemedText>
+            <ThemedView style={styles.lineupsContainer}>
+              <ThemedView style={styles.teamLineupContainer}>
+                <ThemedText style={[styles.teamLineupName, {
+                  color: Colors[colorScheme ?? 'light'].secondary,
+                }]}>
+                  {game.teams.away.team.name}
+                </ThemedText>
+                {renderLineupOrRoster(game.lineupOrRoster, "away")}
+              </ThemedView>
+              <ThemedView style={styles.teamLineupContainer}>
+                <ThemedText style={[styles.teamLineupName, {
+                  color: Colors[colorScheme ?? 'light'].secondary,
+                }]}>
+                  {game.teams.home.team.name}
+                </ThemedText>
+                {renderLineupOrRoster(game.lineupOrRoster, "home")}
+              </ThemedView>
+            </ThemedView>
+          </ThemedView>
         )}
       </ThemedView>
     );
@@ -224,9 +351,68 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     paddingVertical: 2,
   },
+  venueContainer: {
+    alignItems: 'center',
+    gap: 8,
+  },
   venue: {
     fontSize: 12,
     fontWeight: '400',
+    textAlign: 'center',
+  },
+  expandButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  expandButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  lineupSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  lineupTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  lineupsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  teamLineupContainer: {
+    flex: 1,
+  },
+  teamLineupName: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  lineupContainer: {
+    gap: 4,
+  },
+  playerText: {
+    fontSize: 12,
+    fontWeight: '400',
+    textAlign: 'center',
+  },
+  noLineupText: {
+    fontSize: 12,
+    fontWeight: '400',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  morePlayersText: {
+    fontSize: 12,
+    fontWeight: '400',
+    fontStyle: 'italic',
     textAlign: 'center',
   },
 });
