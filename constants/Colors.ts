@@ -1,43 +1,44 @@
-
 /**
  * Apple-inspired color scheme for MLB Parlay Tracker
  * Clean, premium aesthetic with blacks, grays, and modern blues
  */
 
-const tintColorLight = '#0088cc';
-const tintColorDark = '#0088cc';
+const tintColorLight = '#007AFF';
+const tintColorDark = '#0A84FF';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#eeeeee',
+    text: '#1D1D1F',
+    background: '#F2F2F7',
+    surface: '#FFFFFF',
+    card: '#FFFFFF',
+    border: '#E5E5EA',
     tint: tintColorLight,
-    icon: '#666666',
-    tabIconDefault: '#979797',
-    tabIconSelected: tintColorLight,
-    card: '#ffffff',
-    border: '#979797',
+    secondary: '#6D6D80',
+    muted: '#8E8E93',
     error: '#FF3B30',
     success: '#34C759',
-    secondary: '#666666',
-    accent: '#ffffff',
-    surface: '#ffffff',
-    muted: '#979797',
+    warning: '#FF9500',
+    accent: '#FF2D92',
+    icon: '#8E8E93',
+    tabIconDefault: '#8E8E93',
+    tabIconSelected: tintColorLight,
   },
   dark: {
-    text: '#eeeeee',
+    text: '#FFFFFF',
     background: '#000000',
+    surface: '#1C1C1E',
+    card: '#2C2C2E',
+    border: '#38383A',
     tint: tintColorDark,
-    icon: '#979797',
-    tabIconDefault: '#666666',
-    tabIconSelected: tintColorDark,
-    card: '#1a1a1a',
-    border: '#333333',
+    secondary: '#98989D',
+    muted: '#8E8E93',
     error: '#FF453A',
-    success: '#30D158',
-    secondary: '#979797',
-    accent: '#1a1a1a',
-    surface: '#1a1a1a',
-    muted: '#666666',
+    success: '#32D74B',
+    warning: '#FF9F0A',
+    accent: '#FF2D92',
+    icon: '#8E8E93',
+    tabIconDefault: '#8E8E93',
+    tabIconSelected: tintColorDark,
   },
 };

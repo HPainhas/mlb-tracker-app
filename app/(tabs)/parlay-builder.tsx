@@ -1,4 +1,3 @@
-
 import { StyleSheet, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
@@ -23,7 +22,7 @@ const thresholds = ['1+', '2+', '3+', '4+'];
 export default function ParlayBuilderScreen() {
   const colorScheme = useColorScheme();
   const { addParlay, isPlayerUsed } = useParlay();
-  
+
   const [games, setGames] = useState<Game[]>([]);
   const [selectedBetType, setSelectedBetType] = useState('Hits');
   const [selectedPlayers, setSelectedPlayers] = useState<SelectedPlayer[]>([]);
@@ -44,16 +43,16 @@ export default function ParlayBuilderScreen() {
     loadGames();
   }, []);
 
-  
+
 
   const handlePlayerSelect = (player: Player, threshold: string) => {
     const key = `${player.id}-${selectedBetType}`;
-    
+
     setSelectedPlayers(prev => {
       const existingIndex = prev.findIndex(p => 
         p.player.id === player.id && p.betType === selectedBetType
       );
-      
+
       if (existingIndex >= 0) {
         const existing = prev[existingIndex];
         if (existing.threshold === threshold) {
@@ -87,7 +86,7 @@ export default function ParlayBuilderScreen() {
 
   const renderPlayer = ({ item: player }: { item: Player }) => {
     const playerSelection = getPlayerSelection(player);
-    
+
     return (
       <ThemedView style={[styles.playerCard, { 
         backgroundColor: Colors[colorScheme ?? 'light'].card,
@@ -103,11 +102,11 @@ export default function ParlayBuilderScreen() {
             {player.primaryPosition?.abbreviation}
           </ThemedText>
         </ThemedView>
-        
+
         <ThemedView style={styles.thresholdContainer}>
           {thresholds.map((threshold) => {
             const isSelected = playerSelection === threshold;
-            
+
             return (
               <TouchableOpacity
                 key={threshold}
@@ -170,7 +169,7 @@ export default function ParlayBuilderScreen() {
 
   const getAllPlayers = (): Player[] => {
     const allPlayers: Player[] = [];
-    
+
     games.forEach(game => {
       if (game.teams.home.players) {
         Object.values(game.teams.home.players).forEach(player => {
@@ -183,7 +182,7 @@ export default function ParlayBuilderScreen() {
           }
         });
       }
-      
+
       if (game.teams.away.players) {
         Object.values(game.teams.away.players).forEach(player => {
           if (player.person) {
@@ -273,7 +272,7 @@ export default function ParlayBuilderScreen() {
           <ThemedText style={styles.selectedTitle}>
             Selected Players ({selectedPlayers.length})
           </ThemedText>
-          
+
           <FlatList
             data={selectedPlayers}
             renderItem={renderSelectedPlayer}
@@ -375,8 +374,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     maxHeight: 200,
-    paddingTop: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
   },
   selectedTitle: {
     fontSize: 18,
@@ -391,9 +396,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
+    padding: 16,
+    borderRadius: 12,
     marginBottom: 8,
   },
   selectedPlayerInfo: {

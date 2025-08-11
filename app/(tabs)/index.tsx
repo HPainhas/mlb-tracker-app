@@ -1,4 +1,3 @@
-
 import { StyleSheet, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
@@ -55,7 +54,7 @@ export default function GamesScreen() {
           {game.status.abstractGameState}
         </ThemedText>
       </ThemedView>
-      
+
       <ThemedView style={styles.teamsContainer}>
         <ThemedView style={styles.teamRow}>
           <ThemedText style={styles.teamName}>
@@ -65,13 +64,13 @@ export default function GamesScreen() {
             {game.teams.away.score || '0'}
           </ThemedText>
         </ThemedView>
-        
+
         <ThemedText style={[styles.vsText, {
           color: Colors[colorScheme ?? 'light'].muted
         }]}>
           vs
         </ThemedText>
-        
+
         <ThemedView style={styles.teamRow}>
           <ThemedText style={styles.teamName}>
             {game.teams.home.team.name}
@@ -81,7 +80,7 @@ export default function GamesScreen() {
           </ThemedText>
         </ThemedView>
       </ThemedView>
-      
+
       {game.venue && (
         <ThemedText style={[styles.venue, {
           color: Colors[colorScheme ?? 'light'].secondary
@@ -100,8 +99,11 @@ export default function GamesScreen() {
         <ThemedText type="title" style={styles.headerTitle}>
           Today's Games
         </ThemedText>
+        <ThemedText style={styles.headerSubtitle}>
+          See the latest MLB matchups
+        </ThemedText>
       </ThemedView>
-      
+
       <FlatList
         data={games}
         renderItem={renderGame}
@@ -126,29 +128,32 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#979797',
+    paddingVertical: 20,
+    marginBottom: 8,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700',
-    letterSpacing: -0.5,
+    letterSpacing: -0.8,
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 17,
+    fontWeight: '400',
   },
   listContainer: {
-    padding: 16,
+    paddingHorizontal: 16,
     paddingBottom: 100,
   },
   gameCard: {
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 12,
-    borderWidth: StyleSheet.hairlineWidth,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   gameHeader: {
     flexDirection: 'row',

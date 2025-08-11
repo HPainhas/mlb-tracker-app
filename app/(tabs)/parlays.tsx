@@ -1,4 +1,3 @@
-
 import { StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -34,7 +33,7 @@ export default function ParlaysScreen() {
           </ThemedText>
         </TouchableOpacity>
       </ThemedView>
-      
+
       <ThemedView style={styles.betsContainer}>
         {parlay.bets.map((bet: any, betIndex: number) => (
           <ThemedView 
@@ -54,7 +53,7 @@ export default function ParlaysScreen() {
           </ThemedView>
         ))}
       </ThemedView>
-      
+
       <ThemedView style={styles.parlayFooter}>
         <ThemedText style={[styles.parlayDate, {
           color: Colors[colorScheme ?? 'light'].muted
@@ -99,7 +98,7 @@ export default function ParlaysScreen() {
           {parlays.length} saved parlay{parlays.length !== 1 ? 's' : ''}
         </ThemedText>
       </ThemedView>
-      
+
       <FlatList
         data={parlays}
         renderItem={renderParlay}
@@ -121,19 +120,18 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#979797',
+    paddingVertical: 20,
+    marginBottom: 8,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700',
-    letterSpacing: -0.5,
+    letterSpacing: -0.8,
+    marginBottom: 4,
   },
   headerSubtitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '400',
-    marginTop: 4,
   },
   listContainer: {
     padding: 16,
@@ -158,15 +156,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   parlayCard: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   parlayHeader: {
     flexDirection: 'row',
