@@ -35,6 +35,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="weather"
+        options={{
+          title: 'Weather',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="cloud.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="parlay-builder"
         options={{
           title: 'Builder',
