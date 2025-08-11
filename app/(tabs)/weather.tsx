@@ -1,14 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  FlatList,
+  RefreshControl,
+  ActivityIndicator,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { fetchGames, fetchLineupOrRoster } from '@/services/mlbApi';
-import { getWeatherForVenue, getWindDirectionText, WeatherData } from '@/services/weatherApi';
-import { Game, LineupOrRoster } from '@/types/mlb';
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { fetchGames, fetchLineupOrRoster } from "@/services/mlbApi";
+import {
+  getWeatherForVenue,
+  getWindDirectionText,
+  WeatherData,
+} from "@/services/weatherApi";
+import { Game, LineupOrRoster } from "@/types/mlb";
 
 interface GameWithDetails extends Game {
   weather?: WeatherData | null;
@@ -17,18 +26,20 @@ interface GameWithDetails extends Game {
 
 const formatGameTime = (gameDate: string): string => {
   const date = new Date(gameDate);
-  const time = date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
+  const time = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
     hour12: true,
-    timeZoneName: 'short'
+    timeZoneName: "short",
   });
   return time;
 };
 
 export default function WeatherScreen() {
   const colorScheme = useColorScheme();
-  const [gamesWithDetails, setGamesWithDetails] = useState<GameWithDetails[]>([]);
+  const [gamesWithDetails, setGamesWithDetails] = useState<GameWithDetails[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -37,15 +48,19 @@ export default function WeatherScreen() {
       const games = await fetchGames();
 
       const gamesWithDetailsPromises = games.map(async (game) => {
-        const weather = game.venue?.name ? await getWeatherForVenue(game.venue.name) : null;
-        const lineupOrRoster = await fetchLineupOrRoster(game.gamePk.toString());
+        const weather = game.venue?.name
+          ? await getWeatherForVenue(game.venue.name)
+          : null;
+        const lineupOrRoster = await fetchLineupOrRoster(
+          game.gamePk.toString(),
+        );
         return { ...game, weather, lineupOrRoster };
       });
 
       const gamesWithDetailsData = await Promise.all(gamesWithDetailsPromises);
       setGamesWithDetails(gamesWithDetailsData);
     } catch (error) {
-      console.error('Error loading game details:', error);
+      console.error("Error loading game details:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -61,25 +76,57 @@ export default function WeatherScreen() {
     loadGameDetails();
   };
 
-  const renderLineupOrRoster = (lineupOrRoster: LineupOrRoster | null | undefined, team: 'away' | 'home') => {
+  const renderLineupOrRoster = (
+    lineupOrRoster: LineupOrRoster | null | undefined,
+    team: "away" | "home",
+  ) => {
     if (!lineupOrRoster) {
-      return <ThemedText style={[styles.noLineupText, { color: Colors[colorScheme ?? 'light'].muted }]}>No lineup data available</ThemedText>;
+      return (
+        <ThemedText
+          style={[
+            styles.noLineupText,
+            { color: Colors[colorScheme ?? "light"].muted },
+          ]}
+        >
+          No lineup data available
+        </ThemedText>
+      );
     }
 
     const teamData = lineupOrRoster[team];
     if (!teamData || teamData.length === 0) {
-      return <ThemedText style={[styles.noLineupText, { color: Colors[colorScheme ?? 'light'].muted }]}>No roster data available</ThemedText>;
+      return (
+        <ThemedText
+          style={[
+            styles.noLineupText,
+            { color: Colors[colorScheme ?? "light"].muted },
+          ]}
+        >
+          No roster data available
+        </ThemedText>
+      );
     }
 
     return (
       <ThemedView style={styles.lineupContainer}>
         {teamData.slice(0, 5).map((player, index) => (
-          <ThemedText key={index} style={[styles.playerText, { color: Colors[colorScheme ?? 'light'].text }]}>
+          <ThemedText
+            key={index}
+            style={[
+              styles.playerText,
+              { color: Colors[colorScheme ?? "light"].text },
+            ]}
+          >
             {player.player.fullName}
           </ThemedText>
         ))}
         {teamData.length > 5 && (
-          <ThemedText style={[styles.morePlayersText, { color: Colors[colorScheme ?? 'light'].muted }]}>
+          <ThemedText
+            style={[
+              styles.morePlayersText,
+              { color: Colors[colorScheme ?? "light"].muted },
+            ]}
+          >
             ... and {teamData.length - 5} more
           </ThemedText>
         )}
@@ -88,23 +135,38 @@ export default function WeatherScreen() {
   };
 
   const renderWeatherCard = ({ item: game }: { item: GameWithDetails }) => (
-    <ThemedView style={[styles.weatherCard, {
-      backgroundColor: Colors[colorScheme ?? 'light'].card,
-      borderColor: Colors[colorScheme ?? 'light'].border,
-    }]}>
+    <ThemedView
+      style={[
+        styles.weatherCard,
+        {
+          backgroundColor: Colors[colorScheme ?? "light"].card,
+          borderColor: Colors[colorScheme ?? "light"].border,
+        },
+      ]}
+    >
       <ThemedView style={styles.gameInfo}>
         <ThemedText style={styles.gameTitle}>
           {game.teams.away.team.name} @ {game.teams.home.team.name}
         </ThemedText>
-        <ThemedText style={[styles.gameTime, {
-          color: Colors[colorScheme ?? 'light'].secondary
-        }]}>
+        <ThemedText
+          style={[
+            styles.gameTime,
+            {
+              color: Colors[colorScheme ?? "light"].secondary,
+            },
+          ]}
+        >
           {formatGameTime(game.gameDate)}
         </ThemedText>
         {game.venue && (
-          <ThemedText style={[styles.venue, {
-            color: Colors[colorScheme ?? 'light'].muted
-          }]}>
+          <ThemedText
+            style={[
+              styles.venue,
+              {
+                color: Colors[colorScheme ?? "light"].muted,
+              },
+            ]}
+          >
             📍 {game.venue.name}
           </ThemedText>
         )}
@@ -114,9 +176,14 @@ export default function WeatherScreen() {
         <ThemedView style={styles.weatherInfo}>
           <ThemedView style={styles.weatherRow}>
             <ThemedView style={styles.weatherItem}>
-              <ThemedText style={[styles.weatherLabel, {
-                color: Colors[colorScheme ?? 'light'].muted
-              }]}>
+              <ThemedText
+                style={[
+                  styles.weatherLabel,
+                  {
+                    color: Colors[colorScheme ?? "light"].muted,
+                  },
+                ]}
+              >
                 Temperature
               </ThemedText>
               <ThemedText style={styles.weatherValue}>
@@ -125,9 +192,14 @@ export default function WeatherScreen() {
             </ThemedView>
 
             <ThemedView style={styles.weatherItem}>
-              <ThemedText style={[styles.weatherLabel, {
-                color: Colors[colorScheme ?? 'light'].muted
-              }]}>
+              <ThemedText
+                style={[
+                  styles.weatherLabel,
+                  {
+                    color: Colors[colorScheme ?? "light"].muted,
+                  },
+                ]}
+              >
                 Humidity
               </ThemedText>
               <ThemedText style={styles.weatherValue}>
@@ -138,20 +210,31 @@ export default function WeatherScreen() {
 
           <ThemedView style={styles.weatherRow}>
             <ThemedView style={styles.weatherItem}>
-              <ThemedText style={[styles.weatherLabel, {
-                color: Colors[colorScheme ?? 'light'].muted
-              }]}>
+              <ThemedText
+                style={[
+                  styles.weatherLabel,
+                  {
+                    color: Colors[colorScheme ?? "light"].muted,
+                  },
+                ]}
+              >
                 Wind
               </ThemedText>
               <ThemedText style={styles.weatherValue}>
-                {game.weather.windSpeed} mph {getWindDirectionText(game.weather.windDirection)}
+                {game.weather.windSpeed} mph{" "}
+                {getWindDirectionText(game.weather.windDirection)}
               </ThemedText>
             </ThemedView>
 
             <ThemedView style={styles.weatherItem}>
-              <ThemedText style={[styles.weatherLabel, {
-                color: Colors[colorScheme ?? 'light'].muted
-              }]}>
+              <ThemedText
+                style={[
+                  styles.weatherLabel,
+                  {
+                    color: Colors[colorScheme ?? "light"].muted,
+                  },
+                ]}
+              >
                 Clouds
               </ThemedText>
               <ThemedText style={styles.weatherValue}>
@@ -160,32 +243,63 @@ export default function WeatherScreen() {
             </ThemedView>
           </ThemedView>
 
-          <ThemedText style={[styles.weatherDescription, {
-            color: Colors[colorScheme ?? 'light'].secondary
-          }]}>
+          <ThemedText
+            style={[
+              styles.weatherDescription,
+              {
+                color: Colors[colorScheme ?? "light"].secondary,
+              },
+            ]}
+          >
             {game.weather.description}
           </ThemedText>
         </ThemedView>
       ) : (
         <ThemedView style={styles.noWeatherContainer}>
-          <ThemedText style={[styles.noWeatherText, {
-            color: Colors[colorScheme ?? 'light'].muted
-          }]}>
+          <ThemedText
+            style={[
+              styles.noWeatherText,
+              {
+                color: Colors[colorScheme ?? "light"].muted,
+              },
+            ]}
+          >
             Weather data unavailable
           </ThemedText>
         </ThemedView>
       )}
 
       <ThemedView style={styles.lineupSection}>
-        <ThemedText style={[styles.lineupTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Lineups</ThemedText>
+        <ThemedText
+          style={[
+            styles.lineupTitle,
+            { color: Colors[colorScheme ?? "light"].text },
+          ]}
+        >
+          Lineups
+        </ThemedText>
         <ThemedView style={styles.teamsContainer}>
           <ThemedView style={styles.teamContainer}>
-            <ThemedText style={[styles.teamName, { color: Colors[colorScheme ?? 'light'].secondary }]}>Away Team</ThemedText>
-            {renderLineupOrRoster(game.lineupOrRoster, 'away')}
+            <ThemedText
+              style={[
+                styles.teamName,
+                { color: Colors[colorScheme ?? "light"].secondary },
+              ]}
+            >
+              Away Team
+            </ThemedText>
+            {renderLineupOrRoster(game.lineupOrRoster, "away")}
           </ThemedView>
           <ThemedView style={styles.teamContainer}>
-            <ThemedText style={[styles.teamName, { color: Colors[colorScheme ?? 'light'].secondary }]}>Home Team</ThemedText>
-            {renderLineupOrRoster(game.lineupOrRoster, 'home')}
+            <ThemedText
+              style={[
+                styles.teamName,
+                { color: Colors[colorScheme ?? "light"].secondary },
+              ]}
+            >
+              Home Team
+            </ThemedText>
+            {renderLineupOrRoster(game.lineupOrRoster, "home")}
           </ThemedView>
         </ThemedView>
       </ThemedView>
@@ -194,17 +308,28 @@ export default function WeatherScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, {
-        backgroundColor: Colors[colorScheme ?? 'light'].background
-      }]} edges={['top', 'left', 'right']}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: Colors[colorScheme ?? "light"].background,
+          },
+        ]}
+        edges={["top", "left", "right"]}
+      >
         <ThemedView style={styles.loadingContainer}>
           <ActivityIndicator
             size="large"
-            color={Colors[colorScheme ?? 'light'].tint}
+            color={Colors[colorScheme ?? "light"].tint}
           />
-          <ThemedText style={[styles.loadingText, {
-            color: Colors[colorScheme ?? 'light'].secondary
-          }]}>
+          <ThemedText
+            style={[
+              styles.loadingText,
+              {
+                color: Colors[colorScheme ?? "light"].secondary,
+              },
+            ]}
+          >
             Loading game data...
           </ThemedText>
         </ThemedView>
@@ -213,16 +338,27 @@ export default function WeatherScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, {
-      backgroundColor: Colors[colorScheme ?? 'light'].background
-    }]} edges={['top', 'left', 'right']}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        {
+          backgroundColor: Colors[colorScheme ?? "light"].background,
+        },
+      ]}
+      edges={["top", "left", "right"]}
+    >
       <ThemedView style={styles.header}>
         <ThemedText type="title" style={styles.headerTitle}>
           MLB Games
         </ThemedText>
-        <ThemedText style={[styles.headerSubtitle, {
-          color: Colors[colorScheme ?? 'light'].secondary
-        }]}>
+        <ThemedText
+          style={[
+            styles.headerSubtitle,
+            {
+              color: Colors[colorScheme ?? "light"].secondary,
+            },
+          ]}
+        >
           Today's match-ups and forecasts
         </ThemedText>
       </ThemedView>
@@ -236,7 +372,7 @@ export default function WeatherScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={Colors[colorScheme ?? 'light'].tint}
+            tintColor={Colors[colorScheme ?? "light"].tint}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -256,13 +392,13 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 32,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: -0.8,
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 17,
-    fontWeight: '400',
+    fontWeight: "400",
   },
   listContainer: {
     padding: 16,
@@ -270,19 +406,19 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     gap: 16,
   },
   loadingText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   weatherCard: {
     borderRadius: 16,
     padding: 20,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -295,54 +431,54 @@ const styles = StyleSheet.create({
   },
   gameTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 4,
   },
   gameTime: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     marginBottom: 4,
   },
   venue: {
     fontSize: 12,
-    fontWeight: '400',
+    fontWeight: "400",
   },
   weatherInfo: {
     gap: 12,
   },
   weatherRow: {
-    flexDirection: 'row',
-    justifyContent 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   weatherItem: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   weatherLabel: {
     fontSize: 12,
-    fontWeight: '500',
-    textTransform: 'uppercase',
+    fontWeight: "500",
+    textTransform: "uppercase",
     letterSpacing: 0.5,
     marginBottom: 4,
   },
   weatherValue: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   weatherDescription: {
     fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-    textTransform: 'capitalize',
+    fontWeight: "500",
+    textAlign: "center",
+    textTransform: "capitalize",
     marginTop: 8,
   },
   noWeatherContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 16,
   },
   noWeatherText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   lineupSection: {
     marginTop: 20,
@@ -351,12 +487,12 @@ const styles = StyleSheet.create({
   },
   lineupTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 12,
   },
   teamsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     gap: 16,
   },
   teamContainer: {
@@ -364,7 +500,7 @@ const styles = StyleSheet.create({
   },
   teamName: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     marginBottom: 8,
   },
   lineupContainer: {
@@ -372,15 +508,15 @@ const styles = StyleSheet.create({
   },
   playerText: {
     fontSize: 12,
-    fontWeight: '400',
+    fontWeight: "400",
   },
   noLineupText: {
     fontSize: 12,
-    fontWeight: '400',
+    fontWeight: "400",
   },
   morePlayersText: {
     fontSize: 12,
-    fontWeight: '400',
-    fontStyle: 'italic',
+    fontWeight: "400",
+    fontStyle: "italic",
   },
 });
