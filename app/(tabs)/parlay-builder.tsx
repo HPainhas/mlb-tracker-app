@@ -307,33 +307,26 @@ export default function ParlayBuilderScreen() {
     );
   };
 
-  const renderSelectedPlayer = ({ item }: { item: SelectedPlayer }) => (
-    <ThemedView style={[styles.selectedPlayerCard, { 
-      backgroundColor: Colors[colorScheme ?? 'light'].tint + '10',
-      borderColor: Colors[colorScheme ?? 'light'].tint,
-    }]}>
-      <ThemedView style={styles.selectedPlayerInfo}>
+  const renderSelectedPlayer = ({ item, index }: { item: SelectedPlayer; index: number }) => (
+    <ThemedView style={styles.selectedPlayerRow}>
+      <TouchableOpacity
+        style={styles.removeButton}
+        onPress={() => removePlayer(item.player.id, item.betType)}
+      >
+        <ThemedText style={styles.removeButtonText}>
+          −
+        </ThemedText>
+      </TouchableOpacity>
+      <ThemedView style={styles.selectedPlayerContent}>
         <ThemedText style={styles.selectedPlayerName}>
           {item.player.fullName}
         </ThemedText>
-        <ThemedText style={[styles.selectedPlayerBet, {
-          color: Colors[colorScheme ?? 'light'].tint
+        <ThemedText style={[styles.selectedPlayerAction, {
+          color: Colors[colorScheme ?? 'light'].secondary
         }]}>
-          {item.threshold} {item.betType}
+          {item.threshold} {item.betType.toUpperCase()}
         </ThemedText>
       </ThemedView>
-      <TouchableOpacity
-        style={[styles.removeButton, {
-          backgroundColor: Colors[colorScheme ?? 'light'].error + '20',
-        }]}
-        onPress={() => removePlayer(item.player.id, item.betType)}
-      >
-        <ThemedText style={[styles.removeButtonText, {
-          color: Colors[colorScheme ?? 'light'].error
-        }]}>
-          ✕
-        </ThemedText>
-      </TouchableOpacity>
     </ThemedView>
   );
 
@@ -714,36 +707,47 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 16,
   },
-  selectedPlayerCard: {
+  selectedPlayerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#38383A',
+    gap: 12,
   },
-  selectedPlayerInfo: {
+  selectedPlayerContent: {
     flex: 1,
   },
   selectedPlayerName: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
-    marginBottom: 2,
+    marginBottom: 4,
+  },
+  selectedPlayerAction: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   selectedPlayerBet: {
     fontSize: 12,
     fontWeight: '500',
   },
   removeButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FF3B30',
     alignItems: 'center',
     justifyContent: 'center',
+    textAlign: 'center',
   },
   removeButtonText: {
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '600',
+    color: '#ffffff',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    lineHeight: 20,
   },
   createParlayButton: {
     marginHorizontal: 16,
