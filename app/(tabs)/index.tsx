@@ -139,11 +139,20 @@ export default function GamesScreen() {
         borderColor: Colors[colorScheme ?? 'light'].border,
       }]}>
         <ThemedView style={styles.gameHeader}>
-          <ThemedText style={[styles.gameTime, {
-            color: Colors[colorScheme ?? 'light'].secondary
-          }]}>
-            {formatGameTime(game.gameDate)}
-          </ThemedText>
+          <ThemedView style={styles.gameHeaderLeft}>
+            <ThemedText style={[styles.gameTime, {
+              color: Colors[colorScheme ?? 'light'].secondary
+            }]}>
+              {formatGameTime(game.gameDate)}
+            </ThemedText>
+            {game.venue && (
+              <ThemedText style={[styles.venue, {
+                color: Colors[colorScheme ?? 'light'].secondary
+              }]}>
+                {game.venue.name}
+              </ThemedText>
+            )}
+          </ThemedView>
           <ThemedText style={[styles.gameStatus, {
             color: game.status.abstractGameState === 'Live' 
               ? Colors[colorScheme ?? 'light'].success
@@ -199,25 +208,18 @@ export default function GamesScreen() {
           </ThemedView>
         </ThemedView>
 
-        {game.venue && (
-          <ThemedView style={styles.venueContainer}>
-            <ThemedText style={[styles.venue, {
-              color: Colors[colorScheme ?? 'light'].secondary
+        <ThemedView style={styles.venueContainer}>
+          <TouchableOpacity
+            style={styles.expandButton}
+            onPress={() => toggleGameExpansion(game.gamePk)}
+          >
+            <ThemedText style={[styles.expandButtonText, {
+              color: Colors[colorScheme ?? 'light'].tint
             }]}>
-              {game.venue.name}
+              {isExpanded ? 'Hide Lineups' : 'Show Lineups'}
             </ThemedText>
-            <TouchableOpacity
-              style={styles.expandButton}
-              onPress={() => toggleGameExpansion(game.gamePk)}
-            >
-              <ThemedText style={[styles.expandButtonText, {
-                color: Colors[colorScheme ?? 'light'].tint
-              }]}>
-                {isExpanded ? 'Hide Lineups' : 'Show Lineups'}
-              </ThemedText>
-            </TouchableOpacity>
-          </ThemedView>
-        )}
+          </TouchableOpacity>
+        </ThemedView>
 
         {isExpanded && (
           <ThemedView style={[styles.lineupSection, {
@@ -319,8 +321,11 @@ const styles = StyleSheet.create({
   gameHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 12,
+  },
+  gameHeaderLeft: {
+    flex: 1,
   },
   gameTime: {
     fontSize: 12,
@@ -367,12 +372,12 @@ const styles = StyleSheet.create({
   },
   venueContainer: {
     alignItems: 'center',
-    gap: 8,
+    marginTop: 8,
   },
   venue: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '400',
-    textAlign: 'center',
+    marginTop: 2,
   },
   expandButton: {
     paddingHorizontal: 12,
