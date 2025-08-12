@@ -274,9 +274,14 @@ export default function ParlayBuilderScreen() {
           onPress={() => toggleGameExpansion(game.gamePk)}
         >
           <ThemedView style={styles.gameInfo}>
-            <ThemedText style={styles.gameTitle}>
-              {game.teams.away.team.name} @ {game.teams.home.team.name}
-            </ThemedText>
+            <ThemedView style={styles.gameTitleContainer}>
+              <ThemedText style={styles.gameTitle}>
+                {game.teams.away.team.name}
+              </ThemedText>
+              <ThemedText style={styles.gameTitleSeparator}>
+                @ {game.teams.home.team.name}
+              </ThemedText>
+            </ThemedView>
             <ThemedText style={[styles.gameTime, {
               color: Colors[colorScheme ?? 'light'].secondary
             }]}>
@@ -547,10 +552,18 @@ const styles = StyleSheet.create({
   gameInfo: {
     flex: 1,
   },
+  gameTitleContainer: {
+    marginBottom: 4,
+  },
   gameTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 2,
+  },
+  gameTitleSeparator: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#8E8E93',
   },
   gameTime: {
     fontSize: 14,
