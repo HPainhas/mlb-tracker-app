@@ -503,17 +503,20 @@ const styles = StyleSheet.create({
   },
   betTypeScrollContainer: {
     paddingHorizontal: 20,
-    gap: 12,
+    gap: 8,
   },
   betTypeButton: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
+    minWidth: 100,
+    alignItems: 'center',
   },
   betTypeText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
+    textAlign: 'center',
   },
   listContainer: {
     padding: 16,
