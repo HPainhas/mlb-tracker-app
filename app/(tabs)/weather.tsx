@@ -34,6 +34,34 @@ const formatGameTime = (gameDate: string): string => {
   return time;
 };
 
+const getWindDirectionArrow = (direction: number): string => {
+  // Convert degrees to cardinal directions
+  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  const index = Math.round(direction / 22.5) % 16;
+  const cardinalDirection = directions[index];
+  
+  // Map cardinal directions to arrows
+  const directionMap: { [key: string]: string } = {
+    'N': '↑',
+    'NNE': '↑',
+    'NE': '↗',
+    'ENE': '↗',
+    'E': '→',
+    'ESE': '→',
+    'SE': '↘',
+    'SSE': '↘',
+    'S': '↓',
+    'SSW': '↓',
+    'SW': '↙',
+    'WSW': '↙',
+    'W': '←',
+    'WNW': '←',
+    'NW': '↖',
+    'NNW': '↖',
+  };
+  return directionMap[cardinalDirection] || '↑';
+};
+
 export default function WeatherScreen() {
   const colorScheme = useColorScheme();
   const [gamesWithDetails, setGamesWithDetails] = useState<GameWithDetails[]>(
@@ -123,6 +151,7 @@ export default function WeatherScreen() {
         <ThemedView style={styles.weatherInfo}>
           <ThemedView style={styles.weatherRow}>
             <ThemedView style={styles.weatherItem}>
+              <ThemedText style={styles.weatherIcon}>🌡️</ThemedText>
               <ThemedText
                 style={[
                   styles.weatherLabel,
@@ -139,6 +168,7 @@ export default function WeatherScreen() {
             </ThemedView>
 
             <ThemedView style={styles.weatherItem}>
+              <ThemedText style={styles.weatherIcon}>💧</ThemedText>
               <ThemedText
                 style={[
                   styles.weatherLabel,
@@ -157,6 +187,7 @@ export default function WeatherScreen() {
 
           <ThemedView style={styles.weatherRow}>
             <ThemedView style={styles.weatherItem}>
+              <ThemedText style={styles.weatherIcon}>💨</ThemedText>
               <ThemedText
                 style={[
                   styles.weatherLabel,
@@ -169,11 +200,12 @@ export default function WeatherScreen() {
               </ThemedText>
               <ThemedText style={styles.weatherValue}>
                 {game.weather.windSpeed} mph{" "}
-                {getWindDirectionText(game.weather.windDirection)}
+                {getWindDirectionArrow(game.weather.windDirection)}
               </ThemedText>
             </ThemedView>
 
             <ThemedView style={styles.weatherItem}>
+              <ThemedText style={styles.weatherIcon}>☁️</ThemedText>
               <ThemedText
                 style={[
                   styles.weatherLabel,
@@ -182,7 +214,7 @@ export default function WeatherScreen() {
                   },
                 ]}
               >
-                Clouds
+                Precipitation
               </ThemedText>
               <ThemedText style={styles.weatherValue}>
                 {game.weather.rainChance}%
@@ -215,8 +247,6 @@ export default function WeatherScreen() {
           </ThemedText>
         </ThemedView>
       )}
-
-
     </ThemedView>
   );
 
@@ -369,6 +399,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
   },
+  weatherIcon: {
+    fontSize: 24,
+    marginBottom: 4,
+  },
   weatherLabel: {
     fontSize: 12,
     fontWeight: "500",
@@ -395,5 +429,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
-
 });
