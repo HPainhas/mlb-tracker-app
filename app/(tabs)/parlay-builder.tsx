@@ -273,6 +273,11 @@ export default function ParlayBuilderScreen() {
           style={styles.gameHeader}
           onPress={() => toggleGameExpansion(game.gamePk)}
         >
+          <ThemedText style={[styles.gameStatus, {
+            color: isGameStarted ? Colors[colorScheme ?? 'light'].success : Colors[colorScheme ?? 'light'].muted
+          }]}>
+            {game.status.detailedState}
+          </ThemedText>
           <ThemedView style={styles.gameInfo}>
             <ThemedView style={styles.gameTitleContainer}>
               <ThemedText style={styles.gameTitle}>
@@ -286,11 +291,6 @@ export default function ParlayBuilderScreen() {
               color: Colors[colorScheme ?? 'light'].secondary
             }]}>
               {formatGameTime(game.gameDate)}
-            </ThemedText>
-            <ThemedText style={[styles.gameStatus, {
-              color: isGameStarted ? Colors[colorScheme ?? 'light'].success : Colors[colorScheme ?? 'light'].muted
-            }]}>
-              {game.status.detailedState}
             </ThemedText>
           </ThemedView>
           <ThemedText style={[styles.expandIcon, {
@@ -548,6 +548,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
+    position: 'relative',
   },
   gameInfo: {
     flex: 1,
@@ -573,6 +574,9 @@ const styles = StyleSheet.create({
   gameStatus: {
     fontSize: 12,
     fontWeight: '500',
+    position: 'absolute',
+    top: 16,
+    right: 16,
   },
   expandIcon: {
     fontSize: 16,
