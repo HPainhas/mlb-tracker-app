@@ -440,7 +440,7 @@ export default function ParlayBuilderScreen() {
               <ThemedText style={[styles.parlaySummary, {
                 color: Colors[colorScheme ?? 'light'].secondary
               }]}>
-                {selectedPlayers.length} leg parlay
+                {selectedPlayers.length} selections
               </ThemedText>
               <ThemedText style={[styles.expandIcon, {
                 color: Colors[colorScheme ?? 'light'].tint
