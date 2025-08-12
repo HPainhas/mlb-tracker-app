@@ -156,7 +156,9 @@ export default function ParlayBuilderScreen() {
         id: parseInt(sp.player.id),
         fullName: sp.player.fullName,
         position: sp.player.primaryPosition || { code: '', name: '', type: '' },
-        battingOrder: undefined
+        battingOrder: undefined,
+        threshold: sp.threshold,
+        betType: sp.betType
       })),
       gameId: 1, // Mock game ID
       created: new Date().toISOString(),

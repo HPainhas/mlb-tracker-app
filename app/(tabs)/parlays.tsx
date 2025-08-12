@@ -48,7 +48,7 @@ export default function ParlaysScreen() {
             <ThemedText style={[styles.betDetails, {
               color: Colors[colorScheme ?? 'light'].tint
             }]}>
-              {parlay.type}
+              {player.threshold} {player.betType?.toUpperCase() || parlay.type}
             </ThemedText>
           </ThemedView>
         ))}
