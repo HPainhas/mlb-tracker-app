@@ -173,29 +173,21 @@ export default function ParlayBuilderScreen() {
     return selection ? selection.threshold : null;
   };
 
-  const renderPlayer = (player: Player) => {
+  const renderPlayer = (player: Player, index: number, totalPlayers: number) => {
     const playerSelection = getPlayerSelection(player);
 
     return (
       <ThemedView 
         key={player.id}
-        style={[styles.playerCard, { 
+        style={[styles.playerRow, { 
           backgroundColor: Colors[colorScheme ?? 'light'].surface,
           borderColor: Colors[colorScheme ?? 'light'].border,
+          borderBottomWidth: index === totalPlayers - 1 ? 0 : StyleSheet.hairlineWidth,
         }]}
       >
-        <ThemedView style={styles.playerInfo}>
-          <ThemedText style={styles.playerName}>
-            {player.fullName}
-          </ThemedText>
-          <ThemedText style={[styles.playerPosition, {
-            color: Colors[colorScheme ?? 'light'].secondary
-          }]}>
-            {player.primaryPosition?.name || player.primaryPosition?.code}
-            {player.battingOrder && ` • #${player.battingOrder}`}
-          </ThemedText>
-        </ThemedView>
-
+        <ThemedText style={styles.playerName}>
+          {player.fullName}
+        </ThemedText>
         <ThemedView style={styles.thresholdContainer}>
           {thresholds.map((threshold) => {
             const isSelected = playerSelection === threshold;
@@ -255,7 +247,12 @@ export default function ParlayBuilderScreen() {
         }]}>
           {teamName} ({players.length} players)
         </ThemedText>
-        {players.map(player => renderPlayer(player))}
+        <ThemedView style={[styles.playersContainer, {
+          backgroundColor: Colors[colorScheme ?? 'light'].surface,
+          borderColor: Colors[colorScheme ?? 'light'].border,
+        }]}>
+          {players.map((player, index) => renderPlayer(player, index, players.length))}
+        </ThemedView>
       </ThemedView>
     );
   };
@@ -601,11 +598,18 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     paddingVertical: 8,
   },
-  playerCard: {
+  playersContainer: {
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
     borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  playerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   playerInfo: {
     marginBottom: 8,
@@ -613,7 +617,7 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 2,
+    flex: 1,
   },
   playerPosition: {
     fontSize: 12,
@@ -621,15 +625,15 @@ const styles = StyleSheet.create({
   },
   thresholdContainer: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
   },
   thresholdButton: {
-    flex: 1,
-    paddingVertical: 6,
+    paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 6,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
+    minWidth: 32,
   },
   thresholdText: {
     fontSize: 12,
