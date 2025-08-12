@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   gameTime: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
   },
   gameStatus: {
@@ -343,8 +343,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   vsText: {
-    textAlign: 'center',
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '500',
     paddingVertical: 2,
   },
