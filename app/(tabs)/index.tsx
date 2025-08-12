@@ -161,11 +161,16 @@ export default function GamesScreen() {
               {game.teams.away.team.name}
             </ThemedText>
             {isGameStarted && (
-              <ThemedText style={[styles.teamScore, {
-                color: Colors[colorScheme ?? 'light'].text
+              <ThemedView style={[styles.scoreBox, {
+                backgroundColor: Colors[colorScheme ?? 'light'].surface,
+                borderColor: Colors[colorScheme ?? 'light'].border,
               }]}>
-                {game.teams.away.score}
-              </ThemedText>
+                <ThemedText style={[styles.teamScore, {
+                  color: Colors[colorScheme ?? 'light'].text
+                }]}>
+                  {game.teams.away.score}
+                </ThemedText>
+              </ThemedView>
             )}
           </ThemedView>
 
@@ -180,11 +185,16 @@ export default function GamesScreen() {
               {game.teams.home.team.name}
             </ThemedText>
             {isGameStarted && (
-              <ThemedText style={[styles.teamScore, {
-                color: Colors[colorScheme ?? 'light'].text
+              <ThemedView style={[styles.scoreBox, {
+                backgroundColor: Colors[colorScheme ?? 'light'].surface,
+                borderColor: Colors[colorScheme ?? 'light'].border,
               }]}>
-                {game.teams.home.score}
-              </ThemedText>
+                <ThemedText style={[styles.teamScore, {
+                  color: Colors[colorScheme ?? 'light'].text
+                }]}>
+                  {game.teams.home.score}
+                </ThemedText>
+              </ThemedView>
             )}
           </ThemedView>
         </ThemedView>
@@ -336,11 +346,19 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     flex: 1,
   },
+  scoreBox: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    minWidth: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   teamScore: {
     fontSize: 16,
     fontWeight: '700',
-    minWidth: 30,
-    textAlign: 'right',
+    textAlign: 'center',
   },
   vsText: {
     fontSize: 16,
