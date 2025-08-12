@@ -422,54 +422,58 @@ export default function ParlayBuilderScreen() {
         ]}>
           <TouchableOpacity
             style={styles.selectedHeader}
-            onPress={() => selectedPlayers.length > 2 && setIsSelectedExpanded(!isSelectedExpanded)}
-            disabled={selectedPlayers.length <= 2}
+            onPress={() => setIsSelectedExpanded(!isSelectedExpanded)}
           >
-            <ThemedText style={styles.selectedTitle}>
-              Selected Players ({selectedPlayers.length})
-            </ThemedText>
-            {selectedPlayers.length > 2 && (
+            <ThemedView style={styles.selectedHeaderLeft}>
+              <ThemedView style={[styles.betCountBadge, {
+                backgroundColor: Colors[colorScheme ?? 'light'].tint,
+              }]}>
+                <ThemedText style={styles.betCountText}>
+                  {selectedPlayers.length}
+                </ThemedText>
+              </ThemedView>
+              <ThemedText style={styles.selectedTitle}>
+                Parlay
+              </ThemedText>
+            </ThemedView>
+            <ThemedView style={styles.selectedHeaderRight}>
+              <ThemedText style={[styles.parlaySummary, {
+                color: Colors[colorScheme ?? 'light'].secondary
+              }]}>
+                {selectedPlayers.length} leg parlay
+              </ThemedText>
               <ThemedText style={[styles.expandIcon, {
                 color: Colors[colorScheme ?? 'light'].tint
               }]}>
                 {isSelectedExpanded ? '▼' : '▲'}
               </ThemedText>
-            )}
+            </ThemedView>
           </TouchableOpacity>
 
-          <FlatList
-            data={isSelectedExpanded ? selectedPlayers : selectedPlayers.slice(0, 2)}
-            renderItem={renderSelectedPlayer}
-            keyExtractor={(item) => `${item.player.id}-${item.betType}`}
-            style={[styles.selectedList, { flex: isSelectedExpanded ? 1 : undefined }]}
-            showsVerticalScrollIndicator={false}
-          />
+          {isSelectedExpanded && (
+            <>
+              <FlatList
+                data={selectedPlayers}
+                renderItem={renderSelectedPlayer}
+                keyExtractor={(item) => `${item.player.id}-${item.betType}`}
+                style={styles.selectedList}
+                showsVerticalScrollIndicator={false}
+              />
 
-          {selectedPlayers.length > 2 && !isSelectedExpanded && (
-            <TouchableOpacity
-              style={styles.showMoreButton}
-              onPress={() => setIsSelectedExpanded(true)}
-            >
-              <ThemedText style={[styles.showMoreText, {
-                color: Colors[colorScheme ?? 'light'].tint
-              }]}>
-                Show {selectedPlayers.length - 2} more players
-              </ThemedText>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.createParlayButton, {
+                  backgroundColor: Colors[colorScheme ?? 'light'].tint,
+                }]}
+                onPress={createParlay}
+              >
+                <ThemedText style={[styles.createParlayButtonText, {
+                  color: '#ffffff'
+                }]}>
+                  Create Parlay ({selectedPlayers.length} players)
+                </ThemedText>
+              </TouchableOpacity>
+            </>
           )}
-
-          <TouchableOpacity
-            style={[styles.createParlayButton, {
-              backgroundColor: Colors[colorScheme ?? 'light'].tint,
-            }]}
-            onPress={createParlay}
-          >
-            <ThemedText style={[styles.createParlayButtonText, {
-              color: '#ffffff'
-            }]}>
-              Create Parlay ({selectedPlayers.length} players)
-            </ThemedText>
-          </TouchableOpacity>
         </ThemedView>
       )}
     </SafeAreaView>
@@ -658,12 +662,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  selectedHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  betCountBadge: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+  },
+  betCountText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#ffffff',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    lineHeight: 18,
+  },
+  selectedHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  parlaySummary: {
+    fontSize: 11,
+    fontWeight: '500',
   },
   selectedTitle: {
-    fontSize: 18,
+    fontSize: 13,
     fontWeight: '600',
+    color: '#0A84FF',
   },
   showMoreButton: {
     paddingHorizontal: 20,
@@ -676,6 +711,8 @@ const styles = StyleSheet.create({
   },
   selectedList: {
     paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
   },
   selectedPlayerCard: {
     flexDirection: 'row',
