@@ -6,9 +6,14 @@ const MLB_API_BASE = 'https://statsapi.mlb.com/api/v1';
 
 export const getSchedule = async (): Promise<Game[]> => {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    // Get current date in ET (MLB's official timezone)
+    const today = new Date();
+    const etOffset = -5; // EST offset (adjust for EDT if needed)
+    const etDate = new Date(today.getTime() + (etOffset * 60 * 60 * 1000));
+    const dateStr = etDate.toISOString().split('T')[0];
+    
     const response = await axios.get(
-      `${MLB_API_BASE}/schedule?sportId=1&date=${today}&hydrate=team,venue,linescore`
+      `${MLB_API_BASE}/schedule?sportId=1&date=${dateStr}&hydrate=team,venue,linescore`
     );
     
     if (!response.data.dates || response.data.dates.length === 0) {

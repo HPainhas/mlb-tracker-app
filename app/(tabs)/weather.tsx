@@ -65,6 +65,13 @@ export default function WeatherScreen() {
 
   useEffect(() => {
     loadGameDetails();
+
+    // Set up auto-refresh every 2 minutes for real-time updates
+    const interval = setInterval(() => {
+      loadGameDetails();
+    }, 2 * 60 * 1000); // 2 minutes
+
+    return () => clearInterval(interval);
   }, []);
 
   const onRefresh = () => {
@@ -72,7 +79,7 @@ export default function WeatherScreen() {
     loadGameDetails();
   };
 
-  
+
 
   const renderWeatherCard = ({ item: game }: { item: GameWithDetails }) => (
     <ThemedView
@@ -209,7 +216,7 @@ export default function WeatherScreen() {
         </ThemedView>
       )}
 
-      
+
     </ThemedView>
   );
 
@@ -388,5 +395,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
-  
+
 });

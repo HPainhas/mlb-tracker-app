@@ -1,7 +1,6 @@
-
 import { StyleSheet, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -37,51 +36,63 @@ export default function ParlayBuilderScreen() {
   const [loading, setLoading] = useState(true);
   const [expandedGames, setExpandedGames] = useState<Set<number>>(new Set());
   const [isSelectedExpanded, setIsSelectedExpanded] = useState(false);
+  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const loadData = async () => {
+    try {
+      const fetchedGames = await fetchGames();
+
+      const gamesWithPlayers = await Promise.all(
+        fetchedGames.map(async (game) => {
+          try {
+            // Try to get lineups first, fallback to roster
+            const [homeTeamPlayers, awayTeamPlayers] = await Promise.all([
+              getLineup(game.gamePk, game.teams.home.team.id).catch(() => 
+                getRoster(game.teams.home.team.id)
+              ),
+              getLineup(game.gamePk, game.teams.away.team.id).catch(() => 
+                getRoster(game.teams.away.team.id)
+              )
+            ]);
+
+            return {
+              ...game,
+              homeTeamPlayers: homeTeamPlayers || [],
+              awayTeamPlayers: awayTeamPlayers || []
+            };
+          } catch (error) {
+            console.error(`Error loading players for game ${game.gamePk}:`, error);
+            return {
+              ...game,
+              homeTeamPlayers: [],
+              awayTeamPlayers: []
+            };
+          }
+        })
+      );
+
+      setGames(gamesWithPlayers);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const fetchedGames = await fetchGames();
-        
-        const gamesWithPlayers = await Promise.all(
-          fetchedGames.map(async (game) => {
-            try {
-              // Try to get lineups first, fallback to roster
-              const [homeTeamPlayers, awayTeamPlayers] = await Promise.all([
-                getLineup(game.gamePk, game.teams.home.team.id).catch(() => 
-                  getRoster(game.teams.home.team.id)
-                ),
-                getLineup(game.gamePk, game.teams.away.team.id).catch(() => 
-                  getRoster(game.teams.away.team.id)
-                )
-              ]);
+    loadData(); // Initial load
 
-              return {
-                ...game,
-                homeTeamPlayers: homeTeamPlayers || [],
-                awayTeamPlayers: awayTeamPlayers || []
-              };
-            } catch (error) {
-              console.error(`Error loading players for game ${game.gamePk}:`, error);
-              return {
-                ...game,
-                homeTeamPlayers: [],
-                awayTeamPlayers: []
-              };
-            }
-          })
-        );
+    // Set up interval for auto-refresh
+    refreshIntervalRef.current = setInterval(loadData, 60000); // Refresh every 60 seconds
 
-        setGames(gamesWithPlayers);
-      } catch (error) {
-        console.error('Error loading data:', error);
-      } finally {
-        setLoading(false);
+    // Cleanup interval on component unmount
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
       }
     };
-
-    loadData();
   }, []);
+
 
   const formatGameTime = (gameDate: string) => {
     const date = new Date(gameDate);

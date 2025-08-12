@@ -35,7 +35,7 @@ export default function GamesScreen() {
   const loadGames = async () => {
     try {
       const fetchedGames = await fetchGames();
-      
+
       const gamesWithLineupPromises = fetchedGames.map(async (game) => {
         const lineupOrRoster = await fetchLineupOrRoster(
           game.gamePk.toString(),
@@ -55,6 +55,13 @@ export default function GamesScreen() {
 
   useEffect(() => {
     loadGames();
+
+    // Set up auto-refresh every 2 minutes for real-time updates
+    const interval = setInterval(() => {
+      loadGames();
+    }, 2 * 60 * 1000); // 2 minutes
+
+    return () => clearInterval(interval);
   }, []);
 
   const onRefresh = () => {
