@@ -352,8 +352,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   teamName: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 18,
+    fontWeight: '600',
     flex: 1,
   },
   scoreBox: {
