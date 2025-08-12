@@ -120,9 +120,14 @@ export default function WeatherScreen() {
       ]}
     >
       <ThemedView style={styles.gameInfo}>
-        <ThemedText style={styles.gameTitle}>
-          {game.teams.away.team.name} @ {game.teams.home.team.name}
-        </ThemedText>
+        <ThemedView style={styles.gameTitleContainer}>
+          <ThemedText style={styles.gameTitle}>
+            {game.teams.away.team.name}
+          </ThemedText>
+          <ThemedText style={styles.gameTitleSeparator}>
+            @ {game.teams.home.team.name}
+          </ThemedText>
+        </ThemedView>
         <ThemedText
           style={[
             styles.gameTime,
@@ -374,10 +379,18 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
+  gameTitleContainer: {
+    marginBottom: 4,
+  },
   gameTitle: {
     fontSize: 18,
     fontWeight: "600",
-    marginBottom: 4,
+    marginBottom: 2,
+  },
+  gameTitleSeparator: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#8E8E93",
   },
   gameTime: {
     fontSize: 14,
@@ -398,6 +411,11 @@ const styles = StyleSheet.create({
   weatherItem: {
     flex: 1,
     alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(10, 132, 255, 0.04)',
+    marginHorizontal: 4,
   },
   weatherIcon: {
     fontSize: 24,
