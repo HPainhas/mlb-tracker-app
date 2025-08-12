@@ -746,15 +746,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   createParlayButton: {
-    marginHorizontal: 20,
-    marginVertical: 16,
-    paddingVertical: 16,
-    borderRadius: 12,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    paddingVertical: 10,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   createParlayButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
 });
