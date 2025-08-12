@@ -417,7 +417,7 @@ export default function ParlayBuilderScreen() {
             backgroundColor: Colors[colorScheme ?? 'light'].surface,
             borderTopColor: Colors[colorScheme ?? 'light'].border,
             paddingBottom: bottomTabHeight + 16,
-            maxHeight: isSelectedExpanded ? '50%' : undefined,
+            maxHeight: isSelectedExpanded ? '80%' : undefined,
           }
         ]}>
           <TouchableOpacity
