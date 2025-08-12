@@ -478,7 +478,6 @@ export default function ParlayBuilderScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
   },
   header: {
     paddingHorizontal: 20,
@@ -519,8 +518,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   listContainer: {
-    padding: 16,
-    paddingBottom: 200,
+    paddingHorizontal: 16,
+    paddingBottom: 100,
   },
   loadingContainer: {
     flex: 1,

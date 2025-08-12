@@ -350,7 +350,6 @@ export default function WeatherScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
   },
   header: {
     paddingHorizontal: 20,
@@ -368,7 +367,7 @@ const styles = StyleSheet.create({
     fontWeight: "400",
   },
   listContainer: {
-    padding: 16,
+    paddingHorizontal: 16,
     paddingBottom: 100,
   },
   loadingContainer: {
