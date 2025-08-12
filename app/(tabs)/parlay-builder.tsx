@@ -36,7 +36,7 @@ export default function ParlayBuilderScreen() {
   const [loading, setLoading] = useState(true);
   const [expandedGames, setExpandedGames] = useState<Set<number>>(new Set());
   const [isSelectedExpanded, setIsSelectedExpanded] = useState(false);
-  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadData = async () => {
     try {
