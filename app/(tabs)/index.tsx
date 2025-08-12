@@ -267,7 +267,9 @@ export default function GamesScreen() {
         <ThemedText type="title" style={styles.headerTitle}>
           Today's Games
         </ThemedText>
-        <ThemedText style={styles.headerSubtitle}>
+        <ThemedText style={[styles.headerSubtitle, {
+          color: Colors[colorScheme ?? 'light'].secondary
+        }]}>
           See the latest MLB matchups
         </ThemedText>
       </ThemedView>
