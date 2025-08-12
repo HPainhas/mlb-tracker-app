@@ -499,6 +499,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#979797',
+    marginBottom: 12,
   },
   betTypeScrollContainer: {
     paddingHorizontal: 20,
