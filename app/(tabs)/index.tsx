@@ -146,11 +146,16 @@ export default function GamesScreen() {
               {formatGameTime(game.gameDate)}
             </ThemedText>
             {game.venue && (
-              <ThemedText style={[styles.venue, {
-                color: Colors[colorScheme ?? 'light'].secondary
-              }]}>
-                {game.venue.name}
-              </ThemedText>
+              <ThemedView style={styles.venueContainer}>
+                <ThemedText style={styles.venueIcon}>
+                  🏟️
+                </ThemedText>
+                <ThemedText style={[styles.venue, {
+                  color: Colors[colorScheme ?? 'light'].secondary
+                }]}>
+                  {game.venue.name}
+                </ThemedText>
+              </ThemedView>
             )}
           </ThemedView>
           <ThemedText style={[styles.gameStatus, {
@@ -208,7 +213,7 @@ export default function GamesScreen() {
           </ThemedView>
         </ThemedView>
 
-        <ThemedView style={styles.venueContainer}>
+        <ThemedView style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.expandButton}
             onPress={() => toggleGameExpansion(game.gamePk)}
@@ -371,13 +376,26 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   venueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginTop: 8,
+    gap: 4,
+  },
+  buttonContainer: {
     alignItems: 'center',
     marginTop: 8,
+  },
+  venueIcon: {
+    fontSize: 12,
+    textAlignVertical: 'center',
+    lineHeight: 16,
   },
   venue: {
     fontSize: 11,
     fontWeight: '400',
-    marginTop: 2,
+    textAlignVertical: 'center',
+    lineHeight: 16,
   },
   expandButton: {
     paddingHorizontal: 12,
