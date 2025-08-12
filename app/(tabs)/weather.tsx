@@ -62,6 +62,17 @@ const getWindDirectionArrow = (direction: number): string => {
   return directionMap[cardinalDirection] || '↑';
 };
 
+const getWeatherIcon = (description: string): string => {
+  const desc = description.toLowerCase();
+  if (desc.includes('rain') || desc.includes('drizzle')) return '🌧️';
+  if (desc.includes('snow')) return '❄️';
+  if (desc.includes('cloud') || desc.includes('overcast')) return '☁️';
+  if (desc.includes('clear') || desc.includes('sun')) return '☀️';
+  if (desc.includes('fog') || desc.includes('mist')) return '🌫️';
+  if (desc.includes('thunder') || desc.includes('storm')) return '⛈️';
+  return '🌤️'; // default
+};
+
 export default function WeatherScreen() {
   const colorScheme = useColorScheme();
   const [gamesWithDetails, setGamesWithDetails] = useState<GameWithDetails[]>(
@@ -150,6 +161,23 @@ export default function WeatherScreen() {
             📍 {game.venue.name}
           </ThemedText>
         )}
+        {game.weather && (
+          <ThemedView style={styles.forecastContainer}>
+            <ThemedText style={styles.forecastIcon}>
+              {getWeatherIcon(game.weather.description)}
+            </ThemedText>
+            <ThemedText
+              style={[
+                styles.forecastText,
+                {
+                  color: Colors[colorScheme ?? "light"].secondary,
+                },
+              ]}
+            >
+              {game.weather.description}
+            </ThemedText>
+          </ThemedView>
+        )}
       </ThemedView>
 
       {game.weather ? (
@@ -226,17 +254,6 @@ export default function WeatherScreen() {
               </ThemedText>
             </ThemedView>
           </ThemedView>
-
-          <ThemedText
-            style={[
-              styles.weatherDescription,
-              {
-                color: Colors[colorScheme ?? "light"].secondary,
-              },
-            ]}
-          >
-            {game.weather.description}
-          </ThemedText>
         </ThemedView>
       ) : (
         <ThemedView style={styles.noWeatherContainer}>
@@ -400,6 +417,20 @@ const styles = StyleSheet.create({
   venue: {
     fontSize: 12,
     fontWeight: "400",
+  },
+  forecastContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  forecastIcon: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  forecastText: {
+    fontSize: 12,
+    fontWeight: "500",
+    textTransform: "capitalize",
   },
   weatherInfo: {
     gap: 12,
