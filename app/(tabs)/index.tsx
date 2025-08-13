@@ -9,7 +9,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { fetchGames, fetchLineupOrRoster, getPitchers } from '@/services/mlbApi';
 import { getTeamLogoUrl } from '@/services/teamLogos';
 import { getTeamDisplayName } from '@/utils/teamUtils';
-import { formatGameStatus, formatPitcherDisplay, sortGamesByPriority } from '@/utils/gameUtils';
+import { formatGameStatus, formatGameTime, formatPitcherDisplay, sortGamesByPriority } from '@/utils/gameUtils';
 import { Game, LineupOrRoster } from '@/types/mlb';
 
 interface GameWithLineup extends Game {
@@ -20,17 +20,7 @@ interface GameWithLineup extends Game {
   } | null;
 }
 
-// Helper function to format game time with timezone
-const formatGameTime = (gameDate: string) => {
-  const date = new Date(gameDate);
-  const options: Intl.DateTimeFormatOptions = {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-    timeZoneName: 'short',
-  };
-  return date.toLocaleTimeString('en-US', options);
-};
+
 
 
 

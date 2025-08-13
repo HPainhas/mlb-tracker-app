@@ -15,7 +15,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { fetchGames } from "@/services/mlbApi";
 import { getTeamLogoUrl } from "@/services/teamLogos";
 import { getTeamDisplayName } from "@/utils/teamUtils";
-import { sortGamesByPriority } from "@/utils/gameUtils";
+import { formatGameTime, sortGamesByPriority } from "@/utils/gameUtils";
 import {
   getWeatherForVenue,
   WeatherData,
@@ -26,16 +26,7 @@ interface GameWithDetails extends Game {
   weather?: WeatherData | null;
 }
 
-const formatGameTime = (gameDate: string): string => {
-  const date = new Date(gameDate);
-  const time = date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-    timeZoneName: "short",
-  });
-  return time;
-};
+
 
 const getWindDirectionArrow = (direction: number): string => {
   // Convert degrees to cardinal directions

@@ -12,6 +12,22 @@ export const formatGameStatus = (detailedState: string): string => {
 };
 
 /**
+ * Formats game time for display
+ * @param gameDate - Game date string from the MLB API
+ * @returns Formatted time string with timezone
+ */
+export const formatGameTime = (gameDate: string): string => {
+  const date = new Date(gameDate);
+  const options: Intl.DateTimeFormatOptions = {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+  };
+  return date.toLocaleTimeString('en-US', options);
+};
+
+/**
  * Pitcher information interface
  */
 interface PitcherInfo {

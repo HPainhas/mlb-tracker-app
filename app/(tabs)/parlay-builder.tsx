@@ -10,7 +10,7 @@ import { useParlay } from '@/context/ParlayContext';
 import { fetchGames, getLineup, getRoster, getPitchers, getPlayerStats } from '@/services/mlbApi';
 import { getTeamLogoUrl } from '@/services/teamLogos';
 import { getTeamDisplayName } from '@/utils/teamUtils';
-import { formatGameStatus, formatPitcherDisplay, sortGamesByPriority } from '@/utils/gameUtils';
+import { formatGameStatus, formatGameTime, formatPitcherDisplay, sortGamesByPriority } from '@/utils/gameUtils';
 import { Game, Player } from '@/types/mlb';
 import { useBottomTabOverflow } from '@/components/ui/TabBarBackground';
 
@@ -143,15 +143,7 @@ export default function ParlayBuilderScreen() {
   }, []);
 
 
-  const formatGameTime = (gameDate: string) => {
-    const date = new Date(gameDate);
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-      timeZoneName: 'short',
-    });
-  };
+
 
   const formatPlayerStats = (player: Player) => {
     if (!player.stats) return null;
