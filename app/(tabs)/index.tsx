@@ -210,18 +210,6 @@ export default function GamesScreen() {
             }]}>
               {formatGameTime(game.gameDate)}
             </ThemedText>
-            {game.venue && (
-              <ThemedView style={styles.venueContainer}>
-                <ThemedText style={styles.venueIcon}>
-                  📍
-                </ThemedText>
-                <ThemedText style={[styles.venue, {
-                  color: Colors[colorScheme ?? 'light'].secondary
-                }]}>
-                  {game.venue.name}
-                </ThemedText>
-              </ThemedView>
-            )}
           </ThemedView>
           <ThemedText style={[styles.gameStatus, {
             color: game.status.abstractGameState === 'Live' 
@@ -493,27 +481,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     paddingVertical: 2,
   },
-  venueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    marginTop: 8,
-    gap: 4,
-  },
   buttonContainer: {
     alignItems: 'center',
     marginTop: 8,
-  },
-  venueIcon: {
-    fontSize: 12,
-    textAlignVertical: 'center',
-    lineHeight: 16,
-  },
-  venue: {
-    fontSize: 11,
-    fontWeight: '400',
-    textAlignVertical: 'center',
-    lineHeight: 16,
   },
   expandButton: {
     paddingHorizontal: 12,
