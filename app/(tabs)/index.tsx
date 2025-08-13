@@ -150,7 +150,7 @@ export default function GamesScreen() {
             {game.venue && (
               <ThemedView style={styles.venueContainer}>
                 <ThemedText style={styles.venueIcon}>
-                  🏟️
+                  📍
                 </ThemedText>
                 <ThemedText style={[styles.venue, {
                   color: Colors[colorScheme ?? 'light'].secondary
