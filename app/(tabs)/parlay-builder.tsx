@@ -596,7 +596,8 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   betTypeContainer: {
-    paddingVertical: 16,
+    paddingTop: 0,
+    paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#979797',
     marginBottom: 12,

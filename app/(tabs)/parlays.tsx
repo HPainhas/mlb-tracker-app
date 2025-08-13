@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   listContainer: {
-    padding: 16,
+    paddingHorizontal: 16,
     paddingBottom: 100,
   },
   emptyListContainer: {
