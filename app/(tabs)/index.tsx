@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   pitcherText: {
     fontSize: 10,
     fontWeight: '400',
-    marginTop: 2,
+    marginTop: 1,
   },
   teamLogo: {
     width: 24,
