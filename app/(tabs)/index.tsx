@@ -31,6 +31,23 @@ const formatGameTime = (gameDate: string) => {
   return date.toLocaleTimeString('en-US', options);
 };
 
+// Helper function to format game status text
+const formatGameStatus = (detailedState: string) => {
+  // Debug: log the original status
+  console.log('Original status:', detailedState);
+  
+  // Handle different variations of delayed start text
+  const formatted = detailedState
+    .replace('DELAYED START', 'DELAYED')
+    .replace('Delayed Start', 'Delayed')
+    .replace('delayed start', 'delayed');
+  
+  // Debug: log the formatted status
+  console.log('Formatted status:', formatted);
+  
+  return formatted;
+};
+
 // Helper function to format pitcher display with stats
 const formatPitcherDisplay = (pitcher: { name: string | null; type: 'probable' | 'starting' | null; stats?: { era?: string; handedness?: string } }) => {
   if (!pitcher.name) return 'TBD';
@@ -218,7 +235,7 @@ export default function GamesScreen() {
               ? Colors[colorScheme ?? 'light'].muted
               : Colors[colorScheme ?? 'light'].tint
           }]}>
-            {game.status.detailedState}
+            {formatGameStatus(game.status.detailedState)}
           </ThemedText>
         </ThemedView>
 

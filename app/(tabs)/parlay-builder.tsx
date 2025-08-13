@@ -175,6 +175,14 @@ export default function ParlayBuilderScreen() {
     });
   };
 
+  const formatGameStatus = (detailedState: string) => {
+    // Handle different variations of delayed start text
+    return detailedState
+      .replace('DELAYED START', 'DELAYED')
+      .replace('Delayed Start', 'Delayed')
+      .replace('delayed start', 'delayed');
+  };
+
   const formatPitcherDisplay = (pitcher: { name: string | null; type: 'probable' | 'starting' | null; stats?: { era?: string; handedness?: string } }) => {
     if (!pitcher.name) return 'TBD';
     
@@ -461,7 +469,7 @@ export default function ParlayBuilderScreen() {
                 ? Colors[colorScheme ?? 'light'].muted
                 : Colors[colorScheme ?? 'light'].tint
             }]}>
-              {game.status.detailedState}
+              {formatGameStatus(game.status.detailedState)}
             </ThemedText>
           </ThemedView>
 
