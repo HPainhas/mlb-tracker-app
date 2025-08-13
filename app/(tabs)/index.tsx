@@ -409,21 +409,23 @@ const styles = StyleSheet.create({
   },
   teamInfo: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flex: 1,
     gap: 8,
   },
   teamNameContainer: {
     flex: 1,
+    justifyContent: 'center',
   },
   pitcherText: {
     fontSize: 10,
     fontWeight: '400',
-    marginTop: 1,
+    marginTop: 2,
   },
   teamLogo: {
     width: 24,
     height: 24,
+    marginTop: 2,
   },
   teamName: {
     fontSize: 18,
