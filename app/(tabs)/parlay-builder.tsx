@@ -873,7 +873,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: '50%',
-    transform: [{ translateY: -35 }],
+    transform: [{ translateY: -20 }],
     zIndex: 1,
   },
   parlayExpandIcon: {
