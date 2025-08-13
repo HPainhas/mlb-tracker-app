@@ -213,3 +213,60 @@ export const formatGameTime = (gameDate: string): string => {
   
   return `${time} ${timeZoneAbbr}`;
 };
+
+export const getPitchers = async (gameId: number): Promise<{ away: string | null; home: string | null }> => {
+  try {
+    const response = await axios.get(
+      `${MLB_API_BASE}/game/${gameId}/boxscore`
+    );
+    
+    const boxscore = response.data.teams;
+    
+    // Look for pitchers in the players list
+    let awayPitcher = null;
+    let homePitcher = null;
+    
+    // Check away team players
+    if (boxscore.away?.players) {
+      for (const playerId in boxscore.away.players) {
+        const player = boxscore.away.players[playerId];
+        if (player?.position?.code === '1' && player?.person?.fullName) {
+          awayPitcher = player.person.fullName;
+          break;
+        }
+      }
+    }
+    
+    // Check home team players
+    if (boxscore.home?.players) {
+      for (const playerId in boxscore.home.players) {
+        const player = boxscore.home.players[playerId];
+        if (player?.position?.code === '1' && player?.person?.fullName) {
+          homePitcher = player.person.fullName;
+          break;
+        }
+      }
+    }
+    
+    // Fallback to probable pitchers if no actual pitchers found
+    if (!awayPitcher) {
+      awayPitcher = boxscore.away?.probablePitcher?.fullName || null;
+    }
+    if (!homePitcher) {
+      homePitcher = boxscore.home?.probablePitcher?.fullName || null;
+    }
+    
+    console.log('Pitchers found:', { away: awayPitcher, home: homePitcher });
+    
+    return {
+      away: awayPitcher,
+      home: homePitcher
+    };
+  } catch (error) {
+    console.error('Error fetching pitchers:', error);
+    return {
+      away: null,
+      home: null
+    };
+  }
+};

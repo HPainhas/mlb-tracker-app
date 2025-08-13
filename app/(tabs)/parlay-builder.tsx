@@ -7,7 +7,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useParlay } from '@/context/ParlayContext';
-import { fetchGames, getLineup, getRoster } from '@/services/mlbApi';
+import { fetchGames, getLineup, getRoster, getPitchers } from '@/services/mlbApi';
 import { getTeamLogoUrl } from '@/services/teamLogos';
 import { getTeamDisplayName } from '@/utils/teamUtils';
 import { Game, Player } from '@/types/mlb';
@@ -22,6 +22,7 @@ interface SelectedPlayer {
 interface GameWithPlayers extends Game {
   homeTeamPlayers: Player[];
   awayTeamPlayers: Player[];
+  pitchers?: { away: string | null; home: string | null } | null;
 }
 
 const betTypes = ['Hits', 'Total Bases', 'Home Runs', 'H+R+RBIs'];
@@ -48,26 +49,29 @@ export default function ParlayBuilderScreen() {
         fetchedGames.map(async (game) => {
           try {
             // Try to get lineups first, fallback to roster
-            const [homeTeamPlayers, awayTeamPlayers] = await Promise.all([
+            const [homeTeamPlayers, awayTeamPlayers, pitchers] = await Promise.all([
               getLineup(game.gamePk, game.teams.home.team.id).catch(() => 
                 getRoster(game.teams.home.team.id)
               ),
               getLineup(game.gamePk, game.teams.away.team.id).catch(() => 
                 getRoster(game.teams.away.team.id)
-              )
+              ),
+              getPitchers(game.gamePk)
             ]);
 
             return {
               ...game,
               homeTeamPlayers: homeTeamPlayers || [],
-              awayTeamPlayers: awayTeamPlayers || []
+              awayTeamPlayers: awayTeamPlayers || [],
+              pitchers
             };
           } catch (error) {
             console.error(`Error loading players for game ${game.gamePk}:`, error);
             return {
               ...game,
               homeTeamPlayers: [],
-              awayTeamPlayers: []
+              awayTeamPlayers: [],
+              pitchers: null
             };
           }
         })
@@ -297,9 +301,24 @@ export default function ParlayBuilderScreen() {
                         style={styles.teamLogo}
                         resizeMode="contain"
                       />
-                      <ThemedText style={styles.gameTitle}>
-                        {getTeamDisplayName(game.teams.away.team.name)}
-                      </ThemedText>
+                      <ThemedView style={styles.teamNameContainer}>
+                        <ThemedText style={styles.gameTitle}>
+                          {getTeamDisplayName(game.teams.away.team.name)}
+                        </ThemedText>
+                        {game.pitchers?.away ? (
+                          <ThemedText style={[styles.pitcherText, {
+                            color: Colors[colorScheme ?? 'light'].muted
+                          }]}>
+                            P: {game.pitchers.away}
+                          </ThemedText>
+                        ) : (
+                          <ThemedText style={[styles.pitcherText, {
+                            color: Colors[colorScheme ?? 'light'].muted
+                          }]}>
+                            P: TBD
+                          </ThemedText>
+                        )}
+                      </ThemedView>
                     </ThemedView>
                   </ThemedView>
                   <ThemedView style={styles.teamTitleRow}>
@@ -309,9 +328,24 @@ export default function ParlayBuilderScreen() {
                         style={styles.teamLogo}
                         resizeMode="contain"
                       />
-                      <ThemedText style={styles.gameTitleSeparator}>
-                        @ {getTeamDisplayName(game.teams.home.team.name)}
-                      </ThemedText>
+                      <ThemedView style={styles.teamNameContainer}>
+                        <ThemedText style={styles.gameTitleSeparator}>
+                          @ {getTeamDisplayName(game.teams.home.team.name)}
+                        </ThemedText>
+                        {game.pitchers?.home ? (
+                          <ThemedText style={[styles.pitcherText, {
+                            color: Colors[colorScheme ?? 'light'].muted
+                          }]}>
+                            P: {game.pitchers.home}
+                          </ThemedText>
+                        ) : (
+                          <ThemedText style={[styles.pitcherText, {
+                            color: Colors[colorScheme ?? 'light'].muted
+                          }]}>
+                            P: TBD
+                          </ThemedText>
+                        )}
+                      </ThemedView>
                     </ThemedView>
                   </ThemedView>
                 </ThemedView>
@@ -638,6 +672,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     gap: 8,
+  },
+  teamNameContainer: {
+    flex: 1,
+  },
+  pitcherText: {
+    fontSize: 10,
+    fontWeight: '400',
+    marginTop: 1,
   },
   teamLogo: {
     width: 20,

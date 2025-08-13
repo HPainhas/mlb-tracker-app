@@ -6,13 +6,14 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { fetchGames, fetchLineupOrRoster } from '@/services/mlbApi';
+import { fetchGames, fetchLineupOrRoster, getPitchers } from '@/services/mlbApi';
 import { getTeamLogoUrl } from '@/services/teamLogos';
 import { getTeamDisplayName } from '@/utils/teamUtils';
 import { Game, LineupOrRoster } from '@/types/mlb';
 
 interface GameWithLineup extends Game {
   lineupOrRoster?: LineupOrRoster | null;
+  pitchers?: { away: string | null; home: string | null } | null;
 }
 
 // Helper function to format game time with timezone
@@ -39,13 +40,20 @@ export default function GamesScreen() {
       const fetchedGames = await fetchGames();
 
       const gamesWithLineupPromises = fetchedGames.map(async (game) => {
-        const lineupOrRoster = await fetchLineupOrRoster(
-          game.gamePk.toString(),
-        );
-        return { ...game, lineupOrRoster };
+        const [lineupOrRoster, pitchers] = await Promise.all([
+          fetchLineupOrRoster(game.gamePk.toString()),
+          getPitchers(game.gamePk)
+        ]);
+        return { ...game, lineupOrRoster, pitchers };
       });
 
       const gamesWithLineupData = await Promise.all(gamesWithLineupPromises);
+      console.log('Games with pitcher data:', gamesWithLineupData.map(g => ({
+        gameId: g.gamePk,
+        awayTeam: g.teams.away.team.name,
+        homeTeam: g.teams.home.team.name,
+        pitchers: g.pitchers
+      })));
       setGames(gamesWithLineupData);
     } catch (error) {
       console.error('Error loading games:', error);
@@ -179,9 +187,24 @@ export default function GamesScreen() {
                 style={styles.teamLogo}
                 resizeMode="contain"
               />
-              <ThemedText style={styles.teamName}>
-                {getTeamDisplayName(game.teams.away.team.name)}
-              </ThemedText>
+              <ThemedView style={styles.teamNameContainer}>
+                <ThemedText style={styles.teamName}>
+                  {getTeamDisplayName(game.teams.away.team.name)}
+                </ThemedText>
+                {game.pitchers?.away ? (
+                  <ThemedText style={[styles.pitcherText, {
+                    color: Colors[colorScheme ?? 'light'].muted
+                  }]}>
+                    P: {game.pitchers.away}
+                  </ThemedText>
+                ) : (
+                  <ThemedText style={[styles.pitcherText, {
+                    color: Colors[colorScheme ?? 'light'].muted
+                  }]}>
+                    P: TBD
+                  </ThemedText>
+                )}
+              </ThemedView>
             </ThemedView>
             {isGameStarted && (
               <ThemedView style={[styles.scoreBox, {
@@ -210,9 +233,24 @@ export default function GamesScreen() {
                 style={styles.teamLogo}
                 resizeMode="contain"
               />
-              <ThemedText style={styles.teamName}>
-                {getTeamDisplayName(game.teams.home.team.name)}
-              </ThemedText>
+              <ThemedView style={styles.teamNameContainer}>
+                <ThemedText style={styles.teamName}>
+                  {getTeamDisplayName(game.teams.home.team.name)}
+                </ThemedText>
+                {game.pitchers?.home ? (
+                  <ThemedText style={[styles.pitcherText, {
+                    color: Colors[colorScheme ?? 'light'].muted
+                  }]}>
+                    P: {game.pitchers.home}
+                  </ThemedText>
+                ) : (
+                  <ThemedText style={[styles.pitcherText, {
+                    color: Colors[colorScheme ?? 'light'].muted
+                  }]}>
+                    P: TBD
+                  </ThemedText>
+                )}
+              </ThemedView>
             </ThemedView>
             {isGameStarted && (
               <ThemedView style={[styles.scoreBox, {
@@ -374,6 +412,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     gap: 8,
+  },
+  teamNameContainer: {
+    flex: 1,
+  },
+  pitcherText: {
+    fontSize: 10,
+    fontWeight: '400',
+    marginTop: 1,
   },
   teamLogo: {
     width: 24,
