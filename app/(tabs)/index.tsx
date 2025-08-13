@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   gameStatus: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.5,

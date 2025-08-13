@@ -276,7 +276,11 @@ export default function ParlayBuilderScreen() {
         >
           {/* Game Status at top right */}
           <ThemedText style={[styles.gameStatus, {
-            color: isGameStarted ? Colors[colorScheme ?? 'light'].success : Colors[colorScheme ?? 'light'].muted
+            color: game.status.abstractGameState === 'Live' 
+              ? Colors[colorScheme ?? 'light'].success
+              : game.status.abstractGameState === 'Final'
+              ? Colors[colorScheme ?? 'light'].muted
+              : Colors[colorScheme ?? 'light'].tint
           }]}>
             {game.status.detailedState}
           </ThemedText>
@@ -671,8 +675,10 @@ const styles = StyleSheet.create({
   },
 
   gameStatus: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     position: 'absolute',
     top: 16,
     right: 16,
