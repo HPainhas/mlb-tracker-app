@@ -35,6 +35,12 @@ const formatGameTime = (gameDate: string) => {
 const formatPitcherDisplay = (pitcher: { name: string | null; type: 'probable' | 'starting' | null; stats?: { era?: string; handedness?: string } }) => {
   if (!pitcher.name) return 'TBD';
   
+  // Convert full name to abbreviated format (e.g., "Mitch Keller" -> "M. Keller")
+  const nameParts = pitcher.name.split(' ');
+  const abbreviatedName = nameParts.length > 1 
+    ? `${nameParts[0][0]}. ${nameParts.slice(1).join(' ')}`
+    : pitcher.name;
+  
   const stats = [];
   if (pitcher.stats?.handedness) {
     stats.push(pitcher.stats.handedness);
@@ -44,10 +50,10 @@ const formatPitcherDisplay = (pitcher: { name: string | null; type: 'probable' |
   }
   
   if (stats.length > 0) {
-    return `${pitcher.name} • ${stats.join(' • ')}`;
+    return `${abbreviatedName} • ${stats.join(' • ')}`;
   }
   
-  return pitcher.name;
+  return abbreviatedName;
 };
 
 export default function GamesScreen() {
