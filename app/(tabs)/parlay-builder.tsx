@@ -321,18 +321,34 @@ export default function ParlayBuilderScreen() {
           {/* Main content area */}
           <ThemedView style={styles.gameContent}>
             <ThemedView style={styles.gameTitleContainer}>
-              <ThemedView style={styles.teamTitleRow}>
-                <ThemedView style={styles.teamInfo}>
-                  <Image 
-                    source={{ uri: getTeamLogoUrl(game.teams.away.team.name) || undefined }} 
-                    style={styles.teamLogo}
-                    resizeMode="contain"
-                  />
-                  <ThemedText style={styles.gameTitle}>
-                    {getTeamDisplayName(game.teams.away.team.name)}
-                  </ThemedText>
+              <ThemedView style={styles.teamsAndScoresRow}>
+                <ThemedView style={styles.teamsColumn}>
+                  <ThemedView style={styles.teamTitleRow}>
+                    <ThemedView style={styles.teamInfo}>
+                      <Image 
+                        source={{ uri: getTeamLogoUrl(game.teams.away.team.name) || undefined }} 
+                        style={styles.teamLogo}
+                        resizeMode="contain"
+                      />
+                      <ThemedText style={styles.gameTitle}>
+                        {getTeamDisplayName(game.teams.away.team.name)}
+                      </ThemedText>
+                    </ThemedView>
+                  </ThemedView>
+                  <ThemedView style={styles.teamTitleRow}>
+                    <ThemedView style={styles.teamInfo}>
+                      <Image 
+                        source={{ uri: getTeamLogoUrl(game.teams.home.team.name) || undefined }} 
+                        style={styles.teamLogo}
+                        resizeMode="contain"
+                      />
+                      <ThemedText style={styles.gameTitleSeparator}>
+                        @ {getTeamDisplayName(game.teams.home.team.name)}
+                      </ThemedText>
+                    </ThemedView>
+                  </ThemedView>
                 </ThemedView>
-                <ThemedView style={styles.rightColumn}>
+                <ThemedView style={styles.scoresColumn}>
                   {isGameStarted && (
                     <ThemedView style={[styles.scoreBox, {
                       backgroundColor: Colors[colorScheme ?? 'light'].surface,
@@ -345,20 +361,6 @@ export default function ParlayBuilderScreen() {
                       </ThemedText>
                     </ThemedView>
                   )}
-                </ThemedView>
-              </ThemedView>
-              <ThemedView style={styles.teamTitleRow}>
-                <ThemedView style={styles.teamInfo}>
-                  <Image 
-                    source={{ uri: getTeamLogoUrl(game.teams.home.team.name) || undefined }} 
-                    style={styles.teamLogo}
-                    resizeMode="contain"
-                  />
-                  <ThemedText style={styles.gameTitleSeparator}>
-                    @ {getTeamDisplayName(game.teams.home.team.name)}
-                  </ThemedText>
-                </ThemedView>
-                <ThemedView style={styles.rightColumn}>
                   {isGameStarted && (
                     <ThemedView style={[styles.scoreBox, {
                       backgroundColor: Colors[colorScheme ?? 'light'].surface,
@@ -649,7 +651,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: 2,
+  },
+  teamsAndScoresRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
+    gap: 12,
+  },
+  teamsColumn: {
+    flex: 1,
+  },
+  scoresColumn: {
+    width: 50,
+    alignItems: 'center',
+    gap: 8,
   },
   teamInfo: {
     flexDirection: 'row',
@@ -699,16 +714,14 @@ const styles = StyleSheet.create({
     top: 16,
     right: 16,
     zIndex: 2,
+    maxWidth: 80,
+    textAlign: 'right',
   },
   gameContent: {
     flex: 1,
-    paddingRight: 40, // Make room for expand icon
+    paddingRight: 100, // Make room for expand icon and longer game status
   },
-  rightColumn: {
-    width: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+
   expandIcon: {
     fontSize: 16,
     fontWeight: '600',
