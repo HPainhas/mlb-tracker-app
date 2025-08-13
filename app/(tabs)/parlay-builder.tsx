@@ -329,7 +329,7 @@ export default function ParlayBuilderScreen() {
                         resizeMode="contain"
                       />
                       <ThemedView style={styles.teamNameContainer}>
-                        <ThemedText style={styles.gameTitleSeparator}>
+                        <ThemedText style={styles.gameTitle}>
                           @ {getTeamDisplayName(game.teams.home.team.name)}
                         </ThemedText>
                         {game.pitchers?.home ? (
@@ -366,6 +366,7 @@ export default function ParlayBuilderScreen() {
                     <ThemedView style={[styles.scoreBox, {
                       backgroundColor: Colors[colorScheme ?? 'light'].surface,
                       borderColor: Colors[colorScheme ?? 'light'].border,
+                      marginTop: 18,
                     }]}>
                       <ThemedText style={[styles.teamScore, {
                         color: Colors[colorScheme ?? 'light'].text
@@ -664,7 +665,7 @@ const styles = StyleSheet.create({
   },
   scoresColumn: {
     width: 50,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 8,
   },
   teamInfo: {
@@ -711,6 +712,7 @@ const styles = StyleSheet.create({
     minWidth: 28,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 2,
   },
   teamScore: {
     fontSize: 12,

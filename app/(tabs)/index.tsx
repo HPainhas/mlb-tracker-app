@@ -48,12 +48,6 @@ export default function GamesScreen() {
       });
 
       const gamesWithLineupData = await Promise.all(gamesWithLineupPromises);
-      console.log('Games with pitcher data:', gamesWithLineupData.map(g => ({
-        gameId: g.gamePk,
-        awayTeam: g.teams.away.team.name,
-        homeTeam: g.teams.home.team.name,
-        pitchers: g.pitchers
-      })));
       setGames(gamesWithLineupData);
     } catch (error) {
       console.error('Error loading games:', error);
@@ -404,7 +398,7 @@ const styles = StyleSheet.create({
   teamRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingVertical: 4,
   },
   teamInfo: {
@@ -440,6 +434,7 @@ const styles = StyleSheet.create({
     minWidth: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 2,
   },
   teamScore: {
     fontSize: 16,

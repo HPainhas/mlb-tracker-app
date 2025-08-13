@@ -256,8 +256,6 @@ export const getPitchers = async (gameId: number): Promise<{ away: string | null
       homePitcher = boxscore.home?.probablePitcher?.fullName || null;
     }
     
-    console.log('Pitchers found:', { away: awayPitcher, home: homePitcher });
-    
     return {
       away: awayPitcher,
       home: homePitcher
