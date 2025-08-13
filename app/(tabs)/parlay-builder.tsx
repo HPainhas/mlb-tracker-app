@@ -10,6 +10,7 @@ import { useParlay } from '@/context/ParlayContext';
 import { fetchGames, getLineup, getRoster, getPitchers, getPlayerStats } from '@/services/mlbApi';
 import { getTeamLogoUrl } from '@/services/teamLogos';
 import { getTeamDisplayName } from '@/utils/teamUtils';
+import { formatGameStatus } from '@/utils/gameUtils';
 import { Game, Player } from '@/types/mlb';
 import { useBottomTabOverflow } from '@/components/ui/TabBarBackground';
 
@@ -175,13 +176,7 @@ export default function ParlayBuilderScreen() {
     });
   };
 
-  const formatGameStatus = (detailedState: string) => {
-    // Handle different variations of delayed start text
-    return detailedState
-      .replace('DELAYED START', 'DELAYED')
-      .replace('Delayed Start', 'Delayed')
-      .replace('delayed start', 'delayed');
-  };
+
 
   const formatPitcherDisplay = (pitcher: { name: string | null; type: 'probable' | 'starting' | null; stats?: { era?: string; handedness?: string } }) => {
     if (!pitcher.name) return 'TBD';
