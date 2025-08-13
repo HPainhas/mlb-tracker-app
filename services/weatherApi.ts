@@ -4,8 +4,6 @@ import axios from "axios";
 const OPENWEATHER_API_KEY = process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY;
 const OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5";
 
-console.log('OpenWeather API Key loaded:', OPENWEATHER_API_KEY ? 'Yes' : 'No');
-
 export interface WeatherData {
   temperature: number;
   humidity: number;
