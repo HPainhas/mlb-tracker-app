@@ -408,6 +408,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    textAlign: 'right',
   },
   teamsContainer: {
     marginBottom: 8,

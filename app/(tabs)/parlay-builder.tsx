@@ -922,7 +922,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    maxWidth: 80,
     textAlign: 'right',
   },
   gameContent: {
