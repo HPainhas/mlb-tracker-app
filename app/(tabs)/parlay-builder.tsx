@@ -17,6 +17,12 @@ interface SelectedPlayer {
   player: Player;
   betType: string;
   threshold: string;
+  gameId: number;
+  gameInfo: {
+    awayTeam: string;
+    homeTeam: string;
+    gameTime: string;
+  };
 }
 
 interface GameWithPlayers extends Game {
@@ -126,7 +132,7 @@ export default function ParlayBuilderScreen() {
     });
   };
 
-  const handlePlayerSelect = (player: Player, threshold: string) => {
+  const handlePlayerSelect = (player: Player, threshold: string, game: GameWithPlayers) => {
     setSelectedPlayers(prev => {
       const existingIndex = prev.findIndex(p => 
         p.player.id === player.id && p.betType === selectedBetType
@@ -140,12 +146,32 @@ export default function ParlayBuilderScreen() {
         } else {
           // Different threshold, update it
           const updated = [...prev];
-          updated[existingIndex] = { player, betType: selectedBetType, threshold };
+          updated[existingIndex] = { 
+            player, 
+            betType: selectedBetType, 
+            threshold,
+            gameId: game.gamePk,
+            gameInfo: {
+              awayTeam: getTeamDisplayName(game.teams.away.team.name),
+              homeTeam: getTeamDisplayName(game.teams.home.team.name),
+              gameTime: formatGameTime(game.gameDate)
+            }
+          };
           return updated;
         }
       } else {
         // New selection
-        return [...prev, { player, betType: selectedBetType, threshold }];
+        return [...prev, { 
+          player, 
+          betType: selectedBetType, 
+          threshold,
+          gameId: game.gamePk,
+          gameInfo: {
+            awayTeam: getTeamDisplayName(game.teams.away.team.name),
+            homeTeam: getTeamDisplayName(game.teams.home.team.name),
+            gameTime: formatGameTime(game.gameDate)
+          }
+        }];
       }
     });
   };
@@ -189,7 +215,23 @@ export default function ParlayBuilderScreen() {
     return selection ? selection.threshold : null;
   };
 
-  const renderPlayer = (player: Player, index: number, totalPlayers: number) => {
+  const groupSelectedPlayersByGame = () => {
+    const grouped = selectedPlayers.reduce((acc, player) => {
+      const gameKey = player.gameId;
+      if (!acc[gameKey]) {
+        acc[gameKey] = {
+          gameInfo: player.gameInfo,
+          players: []
+        };
+      }
+      acc[gameKey].players.push(player);
+      return acc;
+    }, {} as Record<number, { gameInfo: { awayTeam: string; homeTeam: string; gameTime: string }; players: SelectedPlayer[] }>);
+
+    return Object.values(grouped);
+  };
+
+  const renderPlayer = (player: Player, index: number, totalPlayers: number, game: GameWithPlayers) => {
     const playerSelection = getPlayerSelection(player);
 
     return (
@@ -222,7 +264,7 @@ export default function ParlayBuilderScreen() {
                       : Colors[colorScheme ?? 'light'].border,
                   }
                 ]}
-                onPress={() => handlePlayerSelect(player, threshold)}
+                onPress={() => handlePlayerSelect(player, threshold, game)}
               >
                 <ThemedText style={[
                   styles.thresholdText,
@@ -238,7 +280,7 @@ export default function ParlayBuilderScreen() {
     );
   };
 
-  const renderTeamSection = (teamName: string, players: Player[]) => {
+  const renderTeamSection = (teamName: string, players: Player[], game: GameWithPlayers) => {
     if (players.length === 0) {
       return (
         <ThemedView style={styles.teamSection}>
@@ -267,7 +309,7 @@ export default function ParlayBuilderScreen() {
           backgroundColor: Colors[colorScheme ?? 'light'].surface,
           borderColor: Colors[colorScheme ?? 'light'].border,
         }]}>
-          {players.map((player, index) => renderPlayer(player, index, players.length))}
+          {players.map((player, index) => renderPlayer(player, index, players.length, game))}
         </ThemedView>
       </ThemedView>
     );
@@ -410,8 +452,8 @@ export default function ParlayBuilderScreen() {
 
         {isExpanded && (
           <ThemedView style={styles.expandedGameContent}>
-            {renderTeamSection(game.teams.away.team.name, game.awayTeamPlayers)}
-            {renderTeamSection(game.teams.home.team.name, game.homeTeamPlayers)}
+            {renderTeamSection(game.teams.away.team.name, game.awayTeamPlayers, game)}
+            {renderTeamSection(game.teams.home.team.name, game.homeTeamPlayers, game)}
           </ThemedView>
         )}
       </ThemedView>
@@ -437,6 +479,49 @@ export default function ParlayBuilderScreen() {
         }]}>
           {item.threshold} {item.betType.toUpperCase()}
         </ThemedText>
+      </ThemedView>
+    </ThemedView>
+  );
+
+  const renderGameGroup = ({ item }: { item: { gameInfo: { awayTeam: string; homeTeam: string; gameTime: string }; players: SelectedPlayer[] } }) => (
+    <ThemedView style={styles.gameGroupContainer}>
+      <ThemedView style={[styles.gameGroupHeader, {
+        backgroundColor: Colors[colorScheme ?? 'light'].card,
+      }]}>
+        <ThemedText style={[styles.gameGroupTitle, {
+          color: Colors[colorScheme ?? 'light'].secondary
+        }]}>
+          {item.gameInfo.awayTeam} @ {item.gameInfo.homeTeam}
+        </ThemedText>
+        <ThemedText style={[styles.gameGroupTime, {
+          color: Colors[colorScheme ?? 'light'].muted
+        }]}>
+          {item.gameInfo.gameTime}
+        </ThemedText>
+      </ThemedView>
+      <ThemedView style={styles.gameGroupPlayers}>
+        {item.players.map((player, index) => (
+          <ThemedView key={`${player.player.id}-${player.betType}`} style={styles.selectedPlayerRow}>
+            <TouchableOpacity
+              style={styles.removeButton}
+              onPress={() => removePlayer(player.player.id, player.betType)}
+            >
+              <ThemedText style={styles.removeButtonText}>
+                −
+              </ThemedText>
+            </TouchableOpacity>
+            <ThemedView style={styles.selectedPlayerContent}>
+              <ThemedText style={styles.selectedPlayerName}>
+                {player.player.fullName}
+              </ThemedText>
+              <ThemedText style={[styles.selectedPlayerAction, {
+                color: Colors[colorScheme ?? 'light'].secondary
+              }]}>
+                {player.threshold} {player.betType.toUpperCase()}
+              </ThemedText>
+            </ThemedView>
+          </ThemedView>
+        ))}
       </ThemedView>
     </ThemedView>
   );
@@ -557,9 +642,9 @@ export default function ParlayBuilderScreen() {
           {isSelectedExpanded && (
             <>
               <FlatList
-                data={selectedPlayers}
-                renderItem={renderSelectedPlayer}
-                keyExtractor={(item) => `${item.player.id}-${item.betType}`}
+                data={groupSelectedPlayersByGame()}
+                renderItem={renderGameGroup}
+                keyExtractor={(item) => `${item.gameInfo.awayTeam}-${item.gameInfo.homeTeam}`}
                 style={styles.selectedList}
                 showsVerticalScrollIndicator={false}
               />
@@ -978,5 +1063,28 @@ const styles = StyleSheet.create({
   createParlayButtonText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  gameGroupContainer: {
+    marginBottom: 16,
+  },
+  gameGroupHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  gameGroupTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  gameGroupTime: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  gameGroupPlayers: {
+    paddingLeft: 16,
   },
 });
