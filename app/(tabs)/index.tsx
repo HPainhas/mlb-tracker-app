@@ -8,6 +8,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { fetchGames, fetchLineupOrRoster } from '@/services/mlbApi';
 import { getTeamLogoUrl } from '@/services/teamLogos';
+import { getTeamDisplayName } from '@/utils/teamUtils';
 import { Game, LineupOrRoster } from '@/types/mlb';
 
 interface GameWithLineup extends Game {
@@ -179,7 +180,7 @@ export default function GamesScreen() {
                 resizeMode="contain"
               />
               <ThemedText style={styles.teamName}>
-                {game.teams.away.team.name}
+                {getTeamDisplayName(game.teams.away.team.name)}
               </ThemedText>
             </ThemedView>
             {isGameStarted && (
@@ -210,7 +211,7 @@ export default function GamesScreen() {
                 resizeMode="contain"
               />
               <ThemedText style={styles.teamName}>
-                {game.teams.home.team.name}
+                {getTeamDisplayName(game.teams.home.team.name)}
               </ThemedText>
             </ThemedView>
             {isGameStarted && (
