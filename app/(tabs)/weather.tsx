@@ -14,6 +14,7 @@ import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { fetchGames } from "@/services/mlbApi";
 import { getTeamLogoUrl } from "@/services/teamLogos";
+import { getTeamDisplayName } from "@/utils/teamUtils";
 import {
   getWeatherForVenue,
   WeatherData,
@@ -140,7 +141,7 @@ export default function WeatherScreen() {
               resizeMode="contain"
             />
             <ThemedText style={styles.gameTitle}>
-              {game.teams.away.team.name}
+              {getTeamDisplayName(game.teams.away.team.name)}
             </ThemedText>
           </ThemedView>
           <ThemedView style={styles.teamTitleRow}>
@@ -150,7 +151,7 @@ export default function WeatherScreen() {
               resizeMode="contain"
             />
             <ThemedText style={styles.gameTitleSeparator}>
-              @ {game.teams.home.team.name}
+              @ {getTeamDisplayName(game.teams.home.team.name)}
             </ThemedText>
           </ThemedView>
         </ThemedView>
