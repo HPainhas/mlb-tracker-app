@@ -45,6 +45,31 @@ const getThresholds = (betType: string) => {
   }
 };
 
+// Helper function to sort games by priority and time
+const sortGamesByPriority = (games: GameWithPlayers[]) => {
+  return games.sort((a, b) => {
+    // Define priority groups
+    const getPriority = (game: GameWithPlayers) => {
+      const state = game.status.abstractGameState;
+      if (state === 'Live') return 1;
+      if (state === 'Preview') return 2;
+      if (['Final', 'Game Over', 'Postponed', 'Cancelled'].includes(state)) return 3;
+      return 4; // Any other states
+    };
+
+    const priorityA = getPriority(a);
+    const priorityB = getPriority(b);
+
+    // If different priorities, sort by priority
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+
+    // If same priority, sort by game time
+    return new Date(a.gameDate).getTime() - new Date(b.gameDate).getTime();
+  });
+};
+
 export default function ParlayBuilderScreen() {
   const colorScheme = useColorScheme();
   const { addParlay } = useParlay();
@@ -116,7 +141,8 @@ export default function ParlayBuilderScreen() {
         })
       );
 
-      setGames(gamesWithPlayers);
+      const sortedGames = sortGamesByPriority(gamesWithPlayers);
+      setGames(sortedGames);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {

@@ -63,6 +63,31 @@ const formatPitcherDisplay = (pitcher: { name: string | null; type: 'probable' |
   return display;
 };
 
+// Helper function to sort games by priority and time
+const sortGamesByPriority = (games: GameWithLineup[]) => {
+  return games.sort((a, b) => {
+    // Define priority groups
+    const getPriority = (game: GameWithLineup) => {
+      const state = game.status.abstractGameState;
+      if (state === 'Live') return 1;
+      if (state === 'Preview') return 2;
+      if (['Final', 'Game Over', 'Postponed', 'Cancelled'].includes(state)) return 3;
+      return 4; // Any other states
+    };
+
+    const priorityA = getPriority(a);
+    const priorityB = getPriority(b);
+
+    // If different priorities, sort by priority
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+
+    // If same priority, sort by game time
+    return new Date(a.gameDate).getTime() - new Date(b.gameDate).getTime();
+  });
+};
+
 export default function GamesScreen() {
   const colorScheme = useColorScheme();
   const [games, setGames] = useState<GameWithLineup[]>([]);
@@ -83,7 +108,8 @@ export default function GamesScreen() {
       });
 
       const gamesWithLineupData = await Promise.all(gamesWithLineupPromises);
-      setGames(gamesWithLineupData);
+      const sortedGames = sortGamesByPriority(gamesWithLineupData);
+      setGames(sortedGames);
     } catch (error) {
       console.error('Error loading games:', error);
     } finally {

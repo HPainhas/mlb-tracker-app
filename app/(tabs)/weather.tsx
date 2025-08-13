@@ -72,7 +72,32 @@ const getWeatherIcon = (description: string): string => {
   if (desc.includes('clear') || desc.includes('sun')) return '☀️';
   if (desc.includes('fog') || desc.includes('mist')) return '🌫️';
   if (desc.includes('thunder') || desc.includes('storm')) return '⛈️';
-  return '🌤️'; // default
+  return '��️'; // default
+};
+
+// Helper function to sort games by priority and time
+const sortGamesByPriority = (games: GameWithDetails[]) => {
+  return games.sort((a, b) => {
+    // Define priority groups
+    const getPriority = (game: GameWithDetails) => {
+      const state = game.status.abstractGameState;
+      if (state === 'Live') return 1;
+      if (state === 'Preview') return 2;
+      if (['Final', 'Game Over', 'Postponed', 'Cancelled'].includes(state)) return 3;
+      return 4; // Any other states
+    };
+
+    const priorityA = getPriority(a);
+    const priorityB = getPriority(b);
+
+    // If different priorities, sort by priority
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+
+    // If same priority, sort by game time
+    return new Date(a.gameDate).getTime() - new Date(b.gameDate).getTime();
+  });
 };
 
 export default function WeatherScreen() {
@@ -95,7 +120,8 @@ export default function WeatherScreen() {
       });
 
       const gamesWithDetailsData = await Promise.all(gamesWithDetailsPromises);
-      setGamesWithDetails(gamesWithDetailsData);
+      const sortedGames = sortGamesByPriority(gamesWithDetailsData);
+      setGamesWithDetails(sortedGames);
     } catch (error) {
       console.error("Error loading game details:", error);
     } finally {
