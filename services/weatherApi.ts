@@ -24,7 +24,7 @@ export interface BallparkLocation {
 const BALLPARK_LOCATIONS: { [key: string]: BallparkLocation } = {
   "Yankee Stadium": { name: "Yankee Stadium", lat: 40.8296, lon: -73.9262 },
   "Fenway Park": { name: "Fenway Park", lat: 42.3467, lon: -71.0972 },
-  "Camden Yards": { name: "Camden Yards", lat: 39.2839, lon: -76.6218 },
+  "Oriole Park at Camden Yards": { name: "Oriole Park at Camden Yards", lat: 39.2839, lon: -76.6218 },
   "Tropicana Field": { name: "Tropicana Field", lat: 27.7682, lon: -82.6534 },
   "Rogers Centre": { name: "Rogers Centre", lat: 43.6414, lon: -79.3894 },
   "Progressive Field": {

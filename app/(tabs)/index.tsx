@@ -1,4 +1,4 @@
-import { StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
+import { StyleSheet, FlatList, RefreshControl, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 
@@ -7,6 +7,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { fetchGames, fetchLineupOrRoster } from '@/services/mlbApi';
+import { getTeamLogoUrl } from '@/services/teamLogos';
 import { Game, LineupOrRoster } from '@/types/mlb';
 
 interface GameWithLineup extends Game {
@@ -171,9 +172,16 @@ export default function GamesScreen() {
 
         <ThemedView style={styles.teamsContainer}>
           <ThemedView style={styles.teamRow}>
-            <ThemedText style={styles.teamName}>
-              {game.teams.away.team.name}
-            </ThemedText>
+            <ThemedView style={styles.teamInfo}>
+              <Image 
+                source={{ uri: getTeamLogoUrl(game.teams.away.team.name) || undefined }} 
+                style={styles.teamLogo}
+                resizeMode="contain"
+              />
+              <ThemedText style={styles.teamName}>
+                {game.teams.away.team.name}
+              </ThemedText>
+            </ThemedView>
             {isGameStarted && (
               <ThemedView style={[styles.scoreBox, {
                 backgroundColor: Colors[colorScheme ?? 'light'].surface,
@@ -195,9 +203,16 @@ export default function GamesScreen() {
           </ThemedText>
 
           <ThemedView style={styles.teamRow}>
-            <ThemedText style={styles.teamName}>
-              {game.teams.home.team.name}
-            </ThemedText>
+            <ThemedView style={styles.teamInfo}>
+              <Image 
+                source={{ uri: getTeamLogoUrl(game.teams.home.team.name) || undefined }} 
+                style={styles.teamLogo}
+                resizeMode="contain"
+              />
+              <ThemedText style={styles.teamName}>
+                {game.teams.home.team.name}
+              </ThemedText>
+            </ThemedView>
             {isGameStarted && (
               <ThemedView style={[styles.scoreBox, {
                 backgroundColor: Colors[colorScheme ?? 'light'].surface,
@@ -352,6 +367,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 4,
+  },
+  teamInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 8,
+  },
+  teamLogo: {
+    width: 24,
+    height: 24,
   },
   teamName: {
     fontSize: 18,

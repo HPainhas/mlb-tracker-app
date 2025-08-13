@@ -1,4 +1,4 @@
-import { StyleSheet, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, FlatList, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect, useRef } from 'react';
 
@@ -8,6 +8,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useParlay } from '@/context/ParlayContext';
 import { fetchGames, getLineup, getRoster } from '@/services/mlbApi';
+import { getTeamLogoUrl } from '@/services/teamLogos';
 import { Game, Player } from '@/types/mlb';
 import { useBottomTabOverflow } from '@/components/ui/TabBarBackground';
 
@@ -279,12 +280,26 @@ export default function ParlayBuilderScreen() {
           </ThemedText>
           <ThemedView style={styles.gameInfo}>
             <ThemedView style={styles.gameTitleContainer}>
-              <ThemedText style={styles.gameTitle}>
-                {game.teams.away.team.name}
-              </ThemedText>
-              <ThemedText style={styles.gameTitleSeparator}>
-                @ {game.teams.home.team.name}
-              </ThemedText>
+              <ThemedView style={styles.teamTitleRow}>
+                <Image 
+                  source={{ uri: getTeamLogoUrl(game.teams.away.team.name) || undefined }} 
+                  style={styles.teamLogo}
+                  resizeMode="contain"
+                />
+                <ThemedText style={styles.gameTitle}>
+                  {game.teams.away.team.name}
+                </ThemedText>
+              </ThemedView>
+              <ThemedView style={styles.teamTitleRow}>
+                <Image 
+                  source={{ uri: getTeamLogoUrl(game.teams.home.team.name) || undefined }} 
+                  style={styles.teamLogo}
+                  resizeMode="contain"
+                />
+                <ThemedText style={styles.gameTitleSeparator}>
+                  @ {game.teams.home.team.name}
+                </ThemedText>
+              </ThemedView>
             </ThemedView>
             <ThemedText style={[styles.gameTime, {
               color: Colors[colorScheme ?? 'light'].secondary
@@ -554,6 +569,16 @@ const styles = StyleSheet.create({
   },
   gameTitleContainer: {
     marginBottom: 4,
+  },
+  teamTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 2,
+  },
+  teamLogo: {
+    width: 20,
+    height: 20,
   },
   gameTitle: {
     fontSize: 18,

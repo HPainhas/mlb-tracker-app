@@ -4,6 +4,7 @@ import {
   FlatList,
   RefreshControl,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -12,9 +13,9 @@ import { ThemedView } from "@/components/ThemedView";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { fetchGames } from "@/services/mlbApi";
+import { getTeamLogoUrl } from "@/services/teamLogos";
 import {
   getWeatherForVenue,
-  getWindDirectionText,
   WeatherData,
 } from "@/services/weatherApi";
 import { Game } from "@/types/mlb";
@@ -132,12 +133,26 @@ export default function WeatherScreen() {
     >
       <ThemedView style={styles.gameInfo}>
         <ThemedView style={styles.gameTitleContainer}>
-          <ThemedText style={styles.gameTitle}>
-            {game.teams.away.team.name}
-          </ThemedText>
-          <ThemedText style={styles.gameTitleSeparator}>
-            @ {game.teams.home.team.name}
-          </ThemedText>
+          <ThemedView style={styles.teamTitleRow}>
+            <Image 
+              source={{ uri: getTeamLogoUrl(game.teams.away.team.name) || undefined }} 
+              style={styles.teamLogo}
+              resizeMode="contain"
+            />
+            <ThemedText style={styles.gameTitle}>
+              {game.teams.away.team.name}
+            </ThemedText>
+          </ThemedView>
+          <ThemedView style={styles.teamTitleRow}>
+            <Image 
+              source={{ uri: getTeamLogoUrl(game.teams.home.team.name) || undefined }} 
+              style={styles.teamLogo}
+              resizeMode="contain"
+            />
+            <ThemedText style={styles.gameTitleSeparator}>
+              @ {game.teams.home.team.name}
+            </ThemedText>
+          </ThemedView>
         </ThemedView>
         <ThemedText
           style={[
@@ -397,6 +412,16 @@ const styles = StyleSheet.create({
   },
   gameTitleContainer: {
     marginBottom: 4,
+  },
+  teamTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 2,
+  },
+  teamLogo: {
+    width: 20,
+    height: 20,
   },
   gameTitle: {
     fontSize: 18,
