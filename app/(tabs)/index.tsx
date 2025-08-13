@@ -41,19 +41,26 @@ const formatPitcherDisplay = (pitcher: { name: string | null; type: 'probable' |
     ? `${nameParts[0][0]}. ${nameParts.slice(1).join(' ')}`
     : pitcher.name;
   
-  const stats = [];
+  // Format handedness as (L) or (R)
+  let handednessDisplay = '';
   if (pitcher.stats?.handedness) {
-    stats.push(pitcher.stats.handedness);
+    if (pitcher.stats.handedness === 'LHP') {
+      handednessDisplay = '(L)';
+    } else if (pitcher.stats.handedness === 'RHP') {
+      handednessDisplay = '(R)';
+    }
+  }
+  
+  // Build the display string
+  let display = abbreviatedName;
+  if (handednessDisplay) {
+    display += ` ${handednessDisplay}`;
   }
   if (pitcher.stats?.era) {
-    stats.push(`${pitcher.stats.era} ERA`);
+    display += ` • ${pitcher.stats.era} ERA`;
   }
   
-  if (stats.length > 0) {
-    return `${abbreviatedName} • ${stats.join(' • ')}`;
-  }
-  
-  return abbreviatedName;
+  return display;
 };
 
 export default function GamesScreen() {
