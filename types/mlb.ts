@@ -6,6 +6,12 @@ export interface MLBTeam {
   teamName: string;
 }
 
+export interface MLBProbablePitcher {
+  id: number;
+  fullName: string;
+  link: string;
+}
+
 export interface MLBPlayer {
   id: number;
   fullName: string;
@@ -28,10 +34,12 @@ export interface MLBGame {
     away: {
       team: MLBTeam;
       score?: number;
+      probablePitcher?: MLBProbablePitcher;
     };
     home: {
       team: MLBTeam;
       score?: number;
+      probablePitcher?: MLBProbablePitcher;
     };
   };
   venue: {

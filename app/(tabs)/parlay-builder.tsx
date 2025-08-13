@@ -28,7 +28,10 @@ interface SelectedPlayer {
 interface GameWithPlayers extends Game {
   homeTeamPlayers: Player[];
   awayTeamPlayers: Player[];
-  pitchers?: { away: string | null; home: string | null } | null;
+  pitchers?: { 
+    away: { name: string | null; type: 'probable' | 'starting' | null }; 
+    home: { name: string | null; type: 'probable' | 'starting' | null } 
+  } | null;
 }
 
 const betTypes = ['Hits', 'Total Bases', 'Home Runs', 'H+R+RBIs'];
@@ -62,7 +65,7 @@ export default function ParlayBuilderScreen() {
               getLineup(game.gamePk, game.teams.away.team.id).catch(() => 
                 getRoster(game.teams.away.team.id)
               ),
-              getPitchers(game.gamePk)
+              getPitchers(game.gamePk, game.status.abstractGameState, game)
             ]);
 
             return {
@@ -363,11 +366,11 @@ export default function ParlayBuilderScreen() {
                         <ThemedText style={styles.gameTitle}>
                           {getTeamDisplayName(game.teams.away.team.name)}
                         </ThemedText>
-                        {game.pitchers?.away ? (
+                        {game.pitchers?.away.name ? (
                           <ThemedText style={[styles.pitcherText, {
                             color: Colors[colorScheme ?? 'light'].muted
                           }]}>
-                            P: {game.pitchers.away}
+                            P: {game.pitchers.away.name}
                           </ThemedText>
                         ) : (
                           <ThemedText style={[styles.pitcherText, {
@@ -392,11 +395,11 @@ export default function ParlayBuilderScreen() {
                         }]}>
                           @ <ThemedText style={{ color: '#ffffff' }}>{getTeamDisplayName(game.teams.home.team.name)}</ThemedText>
                         </ThemedText>
-                        {game.pitchers?.home ? (
+                        {game.pitchers?.home.name ? (
                           <ThemedText style={[styles.pitcherText, {
                             color: Colors[colorScheme ?? 'light'].muted
                           }]}>
-                            P: {game.pitchers.home}
+                            P: {game.pitchers.home.name}
                           </ThemedText>
                         ) : (
                           <ThemedText style={[styles.pitcherText, {

@@ -13,7 +13,7 @@ export const getSchedule = async (): Promise<Game[]> => {
     const dateStr = etDate.toISOString().split('T')[0];
     
     const response = await axios.get(
-      `${MLB_API_BASE}/schedule?sportId=1&date=${dateStr}&hydrate=team,venue,linescore`
+      `${MLB_API_BASE}/schedule?sportId=1&date=${dateStr}&hydrate=team,venue,linescore,probablePitcher`
     );
     
     if (!response.data.dates || response.data.dates.length === 0) {
@@ -35,7 +35,8 @@ export const getSchedule = async (): Promise<Game[]> => {
             abbreviation: game.teams.away.team.abbreviation,
             teamName: game.teams.away.team.teamName
           },
-          score: game.teams.away.score || 0
+          score: game.teams.away.score || 0,
+          probablePitcher: game.teams.away.probablePitcher
         },
         home: {
           team: {
@@ -44,7 +45,8 @@ export const getSchedule = async (): Promise<Game[]> => {
             abbreviation: game.teams.home.team.abbreviation,
             teamName: game.teams.home.team.teamName
           },
-          score: game.teams.home.score || 0
+          score: game.teams.home.score || 0,
+          probablePitcher: game.teams.home.probablePitcher
         }
       },
       venue: {
@@ -214,57 +216,71 @@ export const formatGameTime = (gameDate: string): string => {
   return `${time} ${timeZoneAbbr}`;
 };
 
-export const getPitchers = async (gameId: number): Promise<{ away: string | null; home: string | null }> => {
+export const getPitchers = async (gameId: number, gameState?: string, gameData?: any): Promise<{ 
+  away: { name: string | null; type: 'probable' | 'starting' | null }; 
+  home: { name: string | null; type: 'probable' | 'starting' | null } 
+}> => {
   try {
-    const response = await axios.get(
+    // For scheduled games, use probable pitchers from schedule data
+    if (gameState === 'Preview') {
+      return {
+        away: { 
+          name: gameData?.teams?.away?.probablePitcher?.fullName || null, 
+          type: gameData?.teams?.away?.probablePitcher?.fullName ? 'probable' : null 
+        },
+        home: { 
+          name: gameData?.teams?.home?.probablePitcher?.fullName || null, 
+          type: gameData?.teams?.home?.probablePitcher?.fullName ? 'probable' : null 
+        }
+      };
+    }
+    
+    // For live/finished games, get actual starting pitchers from boxscore
+    const boxscoreResponse = await axios.get(
       `${MLB_API_BASE}/game/${gameId}/boxscore`
     );
     
-    const boxscore = response.data.teams;
+    const boxscore = boxscoreResponse.data.teams;
     
-    // Look for pitchers in the players list
+    // Look for actual starting pitchers in the players list
     let awayPitcher = null;
     let homePitcher = null;
+    let awayPitcherType: 'probable' | 'starting' | null = null;
+    let homePitcherType: 'probable' | 'starting' | null = null;
     
-    // Check away team players
+    // Check away team players for actual starting pitcher
     if (boxscore.away?.players) {
       for (const playerId in boxscore.away.players) {
         const player = boxscore.away.players[playerId];
         if (player?.position?.code === '1' && player?.person?.fullName) {
           awayPitcher = player.person.fullName;
+          awayPitcherType = 'starting';
           break;
         }
       }
     }
     
-    // Check home team players
+    // Check home team players for actual starting pitcher
     if (boxscore.home?.players) {
       for (const playerId in boxscore.home.players) {
         const player = boxscore.home.players[playerId];
         if (player?.position?.code === '1' && player?.person?.fullName) {
           homePitcher = player.person.fullName;
+          homePitcherType = 'starting';
           break;
         }
       }
     }
     
-    // Fallback to probable pitchers if no actual pitchers found
-    if (!awayPitcher) {
-      awayPitcher = boxscore.away?.probablePitcher?.fullName || null;
-    }
-    if (!homePitcher) {
-      homePitcher = boxscore.home?.probablePitcher?.fullName || null;
-    }
-    
     return {
-      away: awayPitcher,
-      home: homePitcher
+      away: { name: awayPitcher, type: awayPitcherType },
+      home: { name: homePitcher, type: homePitcherType }
     };
   } catch (error) {
     console.error('Error fetching pitchers:', error);
     return {
-      away: null,
-      home: null
+      away: { name: null, type: null },
+      home: { name: null, type: null }
     };
   }
 };

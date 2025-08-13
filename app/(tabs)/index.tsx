@@ -13,7 +13,10 @@ import { Game, LineupOrRoster } from '@/types/mlb';
 
 interface GameWithLineup extends Game {
   lineupOrRoster?: LineupOrRoster | null;
-  pitchers?: { away: string | null; home: string | null } | null;
+  pitchers?: { 
+    away: { name: string | null; type: 'probable' | 'starting' | null }; 
+    home: { name: string | null; type: 'probable' | 'starting' | null } 
+  } | null;
 }
 
 // Helper function to format game time with timezone
@@ -42,7 +45,7 @@ export default function GamesScreen() {
       const gamesWithLineupPromises = fetchedGames.map(async (game) => {
         const [lineupOrRoster, pitchers] = await Promise.all([
           fetchLineupOrRoster(game.gamePk.toString()),
-          getPitchers(game.gamePk)
+          getPitchers(game.gamePk, game.status.abstractGameState, game)
         ]);
         return { ...game, lineupOrRoster, pitchers };
       });
@@ -187,11 +190,11 @@ export default function GamesScreen() {
                 }]}>
                   {getTeamDisplayName(game.teams.away.team.name)}
                 </ThemedText>
-                {game.pitchers?.away ? (
+                {game.pitchers?.away.name ? (
                   <ThemedText style={[styles.pitcherText, {
                     color: Colors[colorScheme ?? 'light'].muted
                   }]}>
-                    P: {game.pitchers.away}
+                    P: {game.pitchers.away.name}
                   </ThemedText>
                 ) : (
                   <ThemedText style={[styles.pitcherText, {
@@ -229,11 +232,11 @@ export default function GamesScreen() {
                 }]}>
                   @ <ThemedText style={{ color: '#ffffff' }}>{getTeamDisplayName(game.teams.home.team.name)}</ThemedText>
                 </ThemedText>
-                {game.pitchers?.home ? (
+                {game.pitchers?.home.name ? (
                   <ThemedText style={[styles.pitcherText, {
                     color: Colors[colorScheme ?? 'light'].muted
                   }]}>
-                    P: {game.pitchers.home}
+                    P: {game.pitchers.home.name}
                   </ThemedText>
                 ) : (
                   <ThemedText style={[styles.pitcherText, {
