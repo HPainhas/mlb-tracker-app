@@ -182,7 +182,9 @@ export default function GamesScreen() {
                 resizeMode="contain"
               />
               <ThemedView style={styles.teamNameContainer}>
-                <ThemedText style={styles.teamName}>
+                <ThemedText style={[styles.teamName, {
+                  color: '#ffffff'
+                }]}>
                   {getTeamDisplayName(game.teams.away.team.name)}
                 </ThemedText>
                 {game.pitchers?.away ? (
@@ -214,12 +216,6 @@ export default function GamesScreen() {
             )}
           </ThemedView>
 
-          <ThemedText style={[styles.vsText, {
-            color: Colors[colorScheme ?? 'light'].muted
-          }]}>
-            @
-          </ThemedText>
-
           <ThemedView style={styles.teamRow}>
             <ThemedView style={styles.teamInfo}>
               <Image 
@@ -228,8 +224,10 @@ export default function GamesScreen() {
                 resizeMode="contain"
               />
               <ThemedView style={styles.teamNameContainer}>
-                <ThemedText style={styles.teamName}>
-                  {getTeamDisplayName(game.teams.home.team.name)}
+                <ThemedText style={[styles.teamName, {
+                  color: Colors[colorScheme ?? 'light'].secondary
+                }]}>
+                  @ <ThemedText style={{ color: '#ffffff' }}>{getTeamDisplayName(game.teams.home.team.name)}</ThemedText>
                 </ThemedText>
                 {game.pitchers?.home ? (
                   <ThemedText style={[styles.pitcherText, {

@@ -140,7 +140,9 @@ export default function WeatherScreen() {
               style={styles.teamLogo}
               resizeMode="contain"
             />
-            <ThemedText style={styles.gameTitle}>
+            <ThemedText style={[styles.gameTitle, {
+              color: '#ffffff'
+            }]}>
               {getTeamDisplayName(game.teams.away.team.name)}
             </ThemedText>
           </ThemedView>
@@ -150,8 +152,10 @@ export default function WeatherScreen() {
               style={styles.teamLogo}
               resizeMode="contain"
             />
-            <ThemedText style={styles.gameTitleSeparator}>
-              @ {getTeamDisplayName(game.teams.home.team.name)}
+            <ThemedText style={[styles.gameTitleSeparator, {
+              color: Colors[colorScheme ?? "light"].secondary
+            }]}>
+              @ <ThemedText style={{ color: '#ffffff' }}>{getTeamDisplayName(game.teams.home.team.name)}</ThemedText>
             </ThemedText>
           </ThemedView>
         </ThemedView>

@@ -329,8 +329,10 @@ export default function ParlayBuilderScreen() {
                         resizeMode="contain"
                       />
                       <ThemedView style={styles.teamNameContainer}>
-                        <ThemedText style={styles.gameTitle}>
-                          @ {getTeamDisplayName(game.teams.home.team.name)}
+                        <ThemedText style={[styles.gameTitle, {
+                          color: Colors[colorScheme ?? 'light'].secondary
+                        }]}>
+                          @ <ThemedText style={{ color: '#ffffff' }}>{getTeamDisplayName(game.teams.home.team.name)}</ThemedText>
                         </ThemedText>
                         {game.pitchers?.home ? (
                           <ThemedText style={[styles.pitcherText, {
