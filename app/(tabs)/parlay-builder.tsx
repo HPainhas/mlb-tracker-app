@@ -156,6 +156,10 @@ export default function ParlayBuilderScreen() {
     );
   };
 
+  const removeAllSelections = () => {
+    setSelectedPlayers([]);
+  };
+
   const createParlay = () => {
     if (selectedPlayers.length === 0) return;
 
@@ -561,6 +565,20 @@ export default function ParlayBuilderScreen() {
               />
 
               <TouchableOpacity
+                style={[styles.removeAllButton, {
+                  backgroundColor: Colors[colorScheme ?? 'light'].card,
+                  borderColor: Colors[colorScheme ?? 'light'].border,
+                }]}
+                onPress={removeAllSelections}
+              >
+                <ThemedText style={[styles.removeAllButtonText, {
+                  color: Colors[colorScheme ?? 'light'].text
+                }]}>
+                  Remove All Selections
+                </ThemedText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
                 style={[styles.createParlayButton, {
                   backgroundColor: Colors[colorScheme ?? 'light'].tint,
                 }]}
@@ -936,9 +954,22 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     lineHeight: 20,
   },
+  removeAllButton: {
+    marginHorizontal: 16,
+    marginVertical: 4,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeAllButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
   createParlayButton: {
     marginHorizontal: 16,
-    marginVertical: 8,
+    marginVertical: 4,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
