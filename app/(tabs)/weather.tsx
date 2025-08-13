@@ -132,6 +132,14 @@ export default function WeatherScreen() {
         },
       ]}
     >
+      <ThemedView style={styles.gameHeader}>
+        <ThemedText style={[styles.gameTime, {
+          color: Colors[colorScheme ?? "light"].secondary,
+        }]}>
+          {formatGameTime(game.gameDate)}
+        </ThemedText>
+      </ThemedView>
+
       <ThemedView style={styles.gameInfo}>
         <ThemedView style={styles.gameTitleContainer}>
           <ThemedView style={styles.teamTitleRow}>
@@ -159,16 +167,6 @@ export default function WeatherScreen() {
             </ThemedText>
           </ThemedView>
         </ThemedView>
-        <ThemedText
-          style={[
-            styles.gameTime,
-            {
-              color: Colors[colorScheme ?? "light"].secondary,
-            },
-          ]}
-        >
-          {formatGameTime(game.gameDate)}
-        </ThemedText>
         {game.venue && (
           <ThemedText
             style={[
@@ -410,10 +408,18 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  gameHeader: {
+    marginBottom: 12,
+  },
+  gameTime: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
   gameInfo: {
     marginBottom: 20,
     paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingTop: 0,
   },
   gameTitleContainer: {
     marginBottom: 4,
@@ -437,11 +443,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "#8E8E93",
-  },
-  gameTime: {
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: 4,
   },
   venue: {
     fontSize: 12,

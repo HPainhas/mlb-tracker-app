@@ -275,21 +275,29 @@ export default function ParlayBuilderScreen() {
         borderColor: Colors[colorScheme ?? 'light'].border,
       }]}>
         <TouchableOpacity
-          style={styles.gameHeader}
+          style={styles.gameContainer}
           onPress={() => toggleGameExpansion(game.gamePk)}
+          disabled={game.status.detailedState !== 'In Progress'}
         >
-          {/* Game Status at top right */}
-          <ThemedText style={[styles.gameStatus, {
-            color: game.status.abstractGameState === 'Live' 
-              ? Colors[colorScheme ?? 'light'].success
-              : game.status.abstractGameState === 'Final'
-              ? Colors[colorScheme ?? 'light'].muted
-              : Colors[colorScheme ?? 'light'].tint
-          }]}>
-            {game.status.detailedState}
-          </ThemedText>
-          
-          {/* Main content area */}
+          <ThemedView style={styles.gameHeader}>
+            <ThemedView style={styles.gameHeaderLeft}>
+              <ThemedText style={[styles.gameTime, {
+                color: Colors[colorScheme ?? 'light'].secondary
+              }]}>
+                {formatGameTime(game.gameDate)}
+              </ThemedText>
+            </ThemedView>
+            <ThemedText style={[styles.gameStatus, {
+              color: game.status.abstractGameState === 'Live' 
+                ? Colors[colorScheme ?? 'light'].success
+                : game.status.abstractGameState === 'Final'
+                ? Colors[colorScheme ?? 'light'].muted
+                : Colors[colorScheme ?? 'light'].tint
+            }]}>
+              {game.status.detailedState}
+            </ThemedText>
+          </ThemedView>
+
           <ThemedView style={styles.gameContent}>
             <ThemedView style={styles.gameTitleContainer}>
               <ThemedView style={styles.teamsAndScoresRow}>
@@ -380,21 +388,16 @@ export default function ParlayBuilderScreen() {
                 </ThemedView>
               </ThemedView>
             </ThemedView>
-            <ThemedText style={[styles.gameTime, {
-              color: Colors[colorScheme ?? 'light'].secondary
-            }]}>
-              {formatGameTime(game.gameDate)}
-            </ThemedText>
+            
+            {/* Expand Icon positioned separately */}
+            {game.status.detailedState === 'In Progress' && (
+              <ThemedText style={[styles.expandIcon, {
+                color: Colors[colorScheme ?? 'light'].tint
+              }]}>
+                {isExpanded ? '▼' : '▶'}
+              </ThemedText>
+            )}
           </ThemedView>
-          
-          {/* Expand Icon positioned separately */}
-          {game.status.detailedState !== 'Final' && (
-            <ThemedText style={[styles.expandIcon, {
-              color: Colors[colorScheme ?? 'light'].tint
-            }]}>
-              {isExpanded ? '▼' : '▶'}
-            </ThemedText>
-          )}
         </TouchableOpacity>
 
         {isExpanded && (
@@ -640,9 +643,17 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  gameHeader: {
+  gameContainer: {
     padding: 16,
-    position: 'relative',
+  },
+  gameHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  gameHeaderLeft: {
+    flex: 1,
   },
   gameInfo: {
     flex: 1,
@@ -701,9 +712,8 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
   },
   gameTime: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 2,
+    fontSize: 12,
+    fontWeight: '600',
   },
 
   scoreBox: {
@@ -727,23 +737,20 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    zIndex: 2,
     maxWidth: 80,
     textAlign: 'right',
   },
   gameContent: {
-    flex: 1,
+    position: 'relative',
     paddingRight: 100, // Make room for expand icon and longer game status
+    marginTop: 12,
   },
 
   expandIcon: {
     fontSize: 16,
     fontWeight: '600',
     position: 'absolute',
-    right: 16,
+    right: 0,
     top: '50%',
     transform: [{ translateY: -8 }],
     zIndex: 1,
