@@ -15,6 +15,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { fetchGames } from "@/services/mlbApi";
 import { getTeamLogoUrl } from "@/services/teamLogos";
 import { getTeamDisplayName } from "@/utils/teamUtils";
+import { sortGamesByPriority } from "@/utils/gameUtils";
 import {
   getWeatherForVenue,
   WeatherData,
@@ -75,30 +76,7 @@ const getWeatherIcon = (description: string): string => {
   return '��️'; // default
 };
 
-// Helper function to sort games by priority and time
-const sortGamesByPriority = (games: GameWithDetails[]) => {
-  return games.sort((a, b) => {
-    // Define priority groups
-    const getPriority = (game: GameWithDetails) => {
-      const state = game.status.abstractGameState;
-      if (state === 'Live') return 1;
-      if (state === 'Preview') return 2;
-      if (['Final', 'Game Over', 'Postponed', 'Cancelled'].includes(state)) return 3;
-      return 4; // Any other states
-    };
 
-    const priorityA = getPriority(a);
-    const priorityB = getPriority(b);
-
-    // If different priorities, sort by priority
-    if (priorityA !== priorityB) {
-      return priorityA - priorityB;
-    }
-
-    // If same priority, sort by game time
-    return new Date(a.gameDate).getTime() - new Date(b.gameDate).getTime();
-  });
-};
 
 export default function WeatherScreen() {
   const colorScheme = useColorScheme();

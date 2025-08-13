@@ -58,3 +58,45 @@ export const formatPitcherDisplay = (pitcher: PitcherInfo): string => {
   
   return display;
 };
+
+/**
+ * Base game interface for sorting
+ */
+interface BaseGame {
+  gamePk: number;
+  gameDate: string;
+  status: {
+    abstractGameState: string;
+  };
+}
+
+/**
+ * Sorts games by priority and time
+ * Priority order: Live games > Scheduled/Delayed > Final/Game Over/Postponed/Cancelled
+ * Within each priority group, games are sorted chronologically
+ * @param games - Array of games to sort
+ * @returns Sorted array of games
+ */
+export const sortGamesByPriority = <T extends BaseGame>(games: T[]): T[] => {
+  return games.sort((a, b) => {
+    // Define priority groups
+    const getPriority = (game: T) => {
+      const state = game.status.abstractGameState;
+      if (state === 'Live') return 1;
+      if (state === 'Preview') return 2;
+      if (['Final', 'Game Over', 'Postponed', 'Cancelled'].includes(state)) return 3;
+      return 4; // Any other states
+    };
+
+    const priorityA = getPriority(a);
+    const priorityB = getPriority(b);
+
+    // If different priorities, sort by priority
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+
+    // If same priority, sort by game time
+    return new Date(a.gameDate).getTime() - new Date(b.gameDate).getTime();
+  });
+};
