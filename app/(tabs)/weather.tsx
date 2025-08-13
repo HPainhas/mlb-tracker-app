@@ -26,8 +26,6 @@ interface GameWithDetails extends Game {
   weather?: WeatherData | null;
 }
 
-
-
 const getWindDirectionArrow = (direction: number): string => {
   // Convert degrees to cardinal directions
   const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
@@ -66,8 +64,6 @@ const getWeatherIcon = (description: string): string => {
   if (desc.includes('thunder') || desc.includes('storm')) return '⛈️';
   return '��️'; // default
 };
-
-
 
 export default function WeatherScreen() {
   const colorScheme = useColorScheme();
@@ -114,8 +110,6 @@ export default function WeatherScreen() {
     setRefreshing(true);
     loadGameDetails();
   };
-
-
 
   const renderWeatherCard = ({ item: game }: { item: GameWithDetails }) => (
     <ThemedView

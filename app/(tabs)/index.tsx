@@ -20,10 +20,6 @@ interface GameWithLineup extends Game {
   } | null;
 }
 
-
-
-
-
 export default function GamesScreen() {
   const colorScheme = useColorScheme();
   const [games, setGames] = useState<GameWithLineup[]>([]);

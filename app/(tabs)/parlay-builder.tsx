@@ -46,8 +46,6 @@ const getThresholds = (betType: string) => {
   }
 };
 
-
-
 export default function ParlayBuilderScreen() {
   const colorScheme = useColorScheme();
   const { addParlay } = useParlay();
@@ -141,9 +139,6 @@ export default function ParlayBuilderScreen() {
       }
     };
   }, []);
-
-
-
 
   const formatPlayerStats = (player: Player) => {
     if (!player.stats) return null;
