@@ -110,6 +110,10 @@ export default function ParlayBuilderScreen() {
     });
   };
 
+  const isGameExpandable = (gameStatus: string) => {
+    return ['In Progress', 'Scheduled', 'Delayed'].includes(gameStatus);
+  };
+
   const toggleGameExpansion = (gameId: number) => {
     setExpandedGames(prev => {
       const newSet = new Set(prev);
@@ -277,7 +281,7 @@ export default function ParlayBuilderScreen() {
         <TouchableOpacity
           style={styles.gameContainer}
           onPress={() => toggleGameExpansion(game.gamePk)}
-          disabled={game.status.detailedState !== 'In Progress'}
+          disabled={!isGameExpandable(game.status.detailedState)}
         >
           <ThemedView style={styles.gameHeader}>
             <ThemedView style={styles.gameHeaderLeft}>
@@ -390,7 +394,7 @@ export default function ParlayBuilderScreen() {
             </ThemedView>
             
             {/* Expand Icon positioned separately */}
-            {game.status.detailedState === 'In Progress' && (
+            {isGameExpandable(game.status.detailedState) && (
               <ThemedText style={[styles.expandIcon, {
                 color: Colors[colorScheme ?? 'light'].tint
               }]}>
