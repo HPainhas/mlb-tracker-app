@@ -259,7 +259,6 @@ export const getPlayerStats = async (playerId: string): Promise<{ homeRuns?: str
       );
       
       const fallbackStats = fallbackResponse.data.people[0]?.stats?.[0]?.splits?.[0]?.stat;
-      console.log(`Player ${playerId} fallback stats for season ${currentYear - 1}:`, fallbackStats);
       
       return {
         homeRuns: fallbackStats?.homeRuns ? fallbackStats.homeRuns.toString() : undefined,
@@ -268,8 +267,6 @@ export const getPlayerStats = async (playerId: string): Promise<{ homeRuns?: str
         rbi: fallbackStats?.rbi ? fallbackStats.rbi.toString() : undefined
       };
     }
-    
-    console.log(`Player ${playerId} stats for season ${season}:`, stats);
     
     return {
       homeRuns: stats?.homeRuns ? stats.homeRuns.toString() : undefined,
