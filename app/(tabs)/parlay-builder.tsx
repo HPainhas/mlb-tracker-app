@@ -176,10 +176,6 @@ export default function ParlayBuilderScreen() {
     });
   };
 
-
-
-
-
   const formatPlayerStats = (player: Player) => {
     if (!player.stats) return null;
     

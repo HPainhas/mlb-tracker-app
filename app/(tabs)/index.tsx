@@ -32,10 +32,6 @@ const formatGameTime = (gameDate: string) => {
   return date.toLocaleTimeString('en-US', options);
 };
 
-
-
-
-
 // Helper function to sort games by priority and time
 const sortGamesByPriority = (games: GameWithLineup[]) => {
   return games.sort((a, b) => {
