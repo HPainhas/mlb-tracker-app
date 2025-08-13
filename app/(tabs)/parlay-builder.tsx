@@ -7,7 +7,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useParlay } from '@/context/ParlayContext';
-import { fetchGames, getLineup, getRoster, getPitchers } from '@/services/mlbApi';
+import { fetchGames, getLineup, getRoster, getPitchers, getPlayerStats } from '@/services/mlbApi';
 import { getTeamLogoUrl } from '@/services/teamLogos';
 import { getTeamDisplayName } from '@/utils/teamUtils';
 import { Game, Player } from '@/types/mlb';
@@ -68,10 +68,32 @@ export default function ParlayBuilderScreen() {
               getPitchers(game.gamePk, game.status.abstractGameState, game)
             ]);
 
+            // Fetch stats for all players
+            const allPlayers = [...(homeTeamPlayers || []), ...(awayTeamPlayers || [])];
+            const playerStatsPromises = allPlayers.map(async (player) => {
+              try {
+                const stats = await getPlayerStats(player.id);
+                return { ...player, stats };
+              } catch (error) {
+                console.error(`Error fetching stats for player ${player.id}:`, error);
+                return player;
+              }
+            });
+
+            const playersWithStats = await Promise.all(playerStatsPromises);
+            
+            // Separate back into home and away teams
+            const homeTeamPlayersWithStats = playersWithStats.filter(player => 
+              homeTeamPlayers?.some(homePlayer => homePlayer.id === player.id)
+            );
+            const awayTeamPlayersWithStats = playersWithStats.filter(player => 
+              awayTeamPlayers?.some(awayPlayer => awayPlayer.id === player.id)
+            );
+
             return {
               ...game,
-              homeTeamPlayers: homeTeamPlayers || [],
-              awayTeamPlayers: awayTeamPlayers || [],
+              homeTeamPlayers: homeTeamPlayersWithStats || [],
+              awayTeamPlayers: awayTeamPlayersWithStats || [],
               pitchers
             };
           } catch (error) {
@@ -148,6 +170,23 @@ export default function ParlayBuilderScreen() {
     }
     
     return display;
+  };
+
+  const formatPlayerStats = (player: Player) => {
+    if (!player.stats) return null;
+    
+    const stats = [];
+    const homeRuns = player.stats.homeRuns || '0';
+    const hits = player.stats.hits || '0';
+    const runs = player.stats.runs || '0';
+    const rbi = player.stats.rbi || '0';
+    
+    stats.push(`${homeRuns} HR`);
+    stats.push(`${hits} H`);
+    stats.push(`${runs} R`);
+    stats.push(`${rbi} RBI`);
+    
+    return stats.join(' • ');
   };
 
   const isGameExpandable = (gameStatus: string) => {
@@ -267,6 +306,7 @@ export default function ParlayBuilderScreen() {
 
   const renderPlayer = (player: Player, index: number, totalPlayers: number, game: GameWithPlayers) => {
     const playerSelection = getPlayerSelection(player);
+    const playerStats = formatPlayerStats(player);
 
     return (
       <ThemedView 
@@ -277,9 +317,18 @@ export default function ParlayBuilderScreen() {
           borderBottomWidth: index === totalPlayers - 1 ? 0 : StyleSheet.hairlineWidth,
         }]}
       >
-        <ThemedText style={styles.playerName}>
-          {player.fullName}
-        </ThemedText>
+        <ThemedView style={styles.playerInfo}>
+          <ThemedText style={styles.playerName}>
+            {player.fullName}
+          </ThemedText>
+          {playerStats && (
+            <ThemedText style={[styles.playerStats, {
+              color: Colors[colorScheme ?? 'light'].muted
+            }]}>
+              {playerStats}
+            </ThemedText>
+          )}
+        </ThemedView>
         <ThemedView style={styles.thresholdContainer}>
           {thresholds.map((threshold) => {
             const isSelected = playerSelection === threshold;
@@ -920,12 +969,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   playerInfo: {
-    marginBottom: 8,
+    flex: 1,
   },
   playerName: {
     fontSize: 14,
     fontWeight: '600',
-    flex: 1,
+  },
+  playerStats: {
+    fontSize: 8,
+    fontWeight: '400',
   },
   playerPosition: {
     fontSize: 12,

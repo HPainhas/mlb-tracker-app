@@ -62,6 +62,12 @@ export type Player = {
     type: string;
   };
   battingOrder?: number;
+  stats?: {
+    homeRuns?: string;
+    hits?: string;
+    runs?: string;
+    rbi?: string;
+  };
 };
 
 export interface MLBLineup {

@@ -235,6 +235,54 @@ export const getPitcherStats = async (pitcherId: number): Promise<{ era?: string
   }
 };
 
+export const getPlayerStats = async (playerId: string): Promise<{ homeRuns?: string; hits?: string; runs?: string; rbi?: string }> => {
+  try {
+    // Get current date to determine the correct season
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; // January is 0
+    
+    // If we're in the first few months of the year, use previous year's stats
+    // as the current season hasn't started yet
+    const season = currentMonth < 4 ? currentYear - 1 : currentYear;
+    
+    const response = await axios.get(
+      `${MLB_API_BASE}/people/${playerId}?hydrate=stats(group=[hitting],type=[season],season=${season})`
+    );
+    
+    const stats = response.data.people[0]?.stats?.[0]?.splits?.[0]?.stat;
+    
+    // If no stats found for current season, try the previous year
+    if (!stats && season === currentYear) {
+      const fallbackResponse = await axios.get(
+        `${MLB_API_BASE}/people/${playerId}?hydrate=stats(group=[hitting],type=[season],season=${currentYear - 1})`
+      );
+      
+      const fallbackStats = fallbackResponse.data.people[0]?.stats?.[0]?.splits?.[0]?.stat;
+      console.log(`Player ${playerId} fallback stats for season ${currentYear - 1}:`, fallbackStats);
+      
+      return {
+        homeRuns: fallbackStats?.homeRuns ? fallbackStats.homeRuns.toString() : undefined,
+        hits: fallbackStats?.hits ? fallbackStats.hits.toString() : undefined,
+        runs: fallbackStats?.runs ? fallbackStats.runs.toString() : undefined,
+        rbi: fallbackStats?.rbi ? fallbackStats.rbi.toString() : undefined
+      };
+    }
+    
+    console.log(`Player ${playerId} stats for season ${season}:`, stats);
+    
+    return {
+      homeRuns: stats?.homeRuns ? stats.homeRuns.toString() : undefined,
+      hits: stats?.hits ? stats.hits.toString() : undefined,
+      runs: stats?.runs ? stats.runs.toString() : undefined,
+      rbi: stats?.rbi ? stats.rbi.toString() : undefined
+    };
+  } catch (error) {
+    console.error('Error fetching player stats:', error);
+    return {};
+  }
+};
+
 export const getPitchers = async (gameId: number, gameState?: string, gameData?: any): Promise<{ 
   away: { name: string | null; type: 'probable' | 'starting' | null; stats?: { era?: string; handedness?: string } }; 
   home: { name: string | null; type: 'probable' | 'starting' | null; stats?: { era?: string; handedness?: string } } 
