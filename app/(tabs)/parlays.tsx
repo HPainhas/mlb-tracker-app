@@ -1,4 +1,4 @@
-import { StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -10,6 +10,24 @@ import { useParlay } from '@/context/ParlayContext';
 export default function ParlaysScreen() {
   const colorScheme = useColorScheme();
   const { parlays, removeParlay, isLoading } = useParlay();
+
+  const confirmDeleteParlay = (parlayId: string) => {
+    Alert.alert(
+      'Delete Parlay',
+      'Are you sure you want to delete this parlay? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => removeParlay(parlayId),
+        },
+      ]
+    );
+  };
 
   const renderParlay = ({ item: parlay, index }: { item: any; index: number }) => (
     <ThemedView style={[styles.parlayCard, { 
@@ -24,7 +42,7 @@ export default function ParlaysScreen() {
           style={[styles.deleteButton, {
             backgroundColor: Colors[colorScheme ?? 'light'].error + '20',
           }]}
-          onPress={() => removeParlay(parlay.id)}
+          onPress={() => confirmDeleteParlay(parlay.id)}
         >
           <ThemedText style={[styles.deleteButtonText, {
             color: Colors[colorScheme ?? 'light'].error
