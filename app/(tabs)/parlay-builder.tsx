@@ -10,6 +10,44 @@ import { useParlay } from '@/context/ParlayContext';
 import { fetchGames, getLineup, getRoster } from '@/services/mlbApi';
 import { getTeamLogoUrl } from '@/services/teamLogos';
 import { Game, Player } from '@/types/mlb';
+
+// Helper function to convert team names to abbreviation format
+const getTeamDisplayName = (teamName: string): string => {
+  const abbreviations: { [key: string]: string } = {
+    'Arizona Diamondbacks': 'ARI Diamondbacks',
+    'Atlanta Braves': 'ATL Braves',
+    'Baltimore Orioles': 'BAL Orioles',
+    'Boston Red Sox': 'BOS Red Sox',
+    'Chicago Cubs': 'CHC Cubs',
+    'Chicago White Sox': 'CWS White Sox',
+    'Cincinnati Reds': 'CIN Reds',
+    'Cleveland Guardians': 'CLE Guardians',
+    'Colorado Rockies': 'COL Rockies',
+    'Detroit Tigers': 'DET Tigers',
+    'Houston Astros': 'HOU Astros',
+    'Kansas City Royals': 'KC Royals',
+    'Los Angeles Angels': 'LAA Angels',
+    'Los Angeles Dodgers': 'LAD Dodgers',
+    'Miami Marlins': 'MIA Marlins',
+    'Milwaukee Brewers': 'MIL Brewers',
+    'Minnesota Twins': 'MIN Twins',
+    'New York Mets': 'NYM Mets',
+    'New York Yankees': 'NYY Yankees',
+    'Athletics': 'Athletics',
+    'Philadelphia Phillies': 'PHI Phillies',
+    'Pittsburgh Pirates': 'PIT Pirates',
+    'San Diego Padres': 'SD Padres',
+    'San Francisco Giants': 'SF Giants',
+    'Seattle Mariners': 'SEA Mariners',
+    'St. Louis Cardinals': 'STL Cardinals',
+    'Tampa Bay Rays': 'TB Rays',
+    'Texas Rangers': 'TEX Rangers',
+    'Toronto Blue Jays': 'TOR Blue Jays',
+    'Washington Nationals': 'WSH Nationals'
+  };
+  
+  return abbreviations[teamName] || teamName;
+};
 import { useBottomTabOverflow } from '@/components/ui/TabBarBackground';
 
 interface SelectedPlayer {
@@ -273,32 +311,67 @@ export default function ParlayBuilderScreen() {
           style={styles.gameHeader}
           onPress={() => toggleGameExpansion(game.gamePk)}
         >
+          {/* Game Status at top right */}
           <ThemedText style={[styles.gameStatus, {
             color: isGameStarted ? Colors[colorScheme ?? 'light'].success : Colors[colorScheme ?? 'light'].muted
           }]}>
             {game.status.detailedState}
           </ThemedText>
-          <ThemedView style={styles.gameInfo}>
+          
+          {/* Main content area */}
+          <ThemedView style={styles.gameContent}>
             <ThemedView style={styles.gameTitleContainer}>
               <ThemedView style={styles.teamTitleRow}>
-                <Image 
-                  source={{ uri: getTeamLogoUrl(game.teams.away.team.name) || undefined }} 
-                  style={styles.teamLogo}
-                  resizeMode="contain"
-                />
-                <ThemedText style={styles.gameTitle}>
-                  {game.teams.away.team.name}
-                </ThemedText>
+                <ThemedView style={styles.teamInfo}>
+                  <Image 
+                    source={{ uri: getTeamLogoUrl(game.teams.away.team.name) || undefined }} 
+                    style={styles.teamLogo}
+                    resizeMode="contain"
+                  />
+                  <ThemedText style={styles.gameTitle}>
+                    {getTeamDisplayName(game.teams.away.team.name)}
+                  </ThemedText>
+                </ThemedView>
+                <ThemedView style={styles.rightColumn}>
+                  {isGameStarted && (
+                    <ThemedView style={[styles.scoreBox, {
+                      backgroundColor: Colors[colorScheme ?? 'light'].surface,
+                      borderColor: Colors[colorScheme ?? 'light'].border,
+                    }]}>
+                      <ThemedText style={[styles.teamScore, {
+                        color: Colors[colorScheme ?? 'light'].text
+                      }]}>
+                        {game.teams.away.score}
+                      </ThemedText>
+                    </ThemedView>
+                  )}
+                </ThemedView>
               </ThemedView>
               <ThemedView style={styles.teamTitleRow}>
-                <Image 
-                  source={{ uri: getTeamLogoUrl(game.teams.home.team.name) || undefined }} 
-                  style={styles.teamLogo}
-                  resizeMode="contain"
-                />
-                <ThemedText style={styles.gameTitleSeparator}>
-                  @ {game.teams.home.team.name}
-                </ThemedText>
+                <ThemedView style={styles.teamInfo}>
+                  <Image 
+                    source={{ uri: getTeamLogoUrl(game.teams.home.team.name) || undefined }} 
+                    style={styles.teamLogo}
+                    resizeMode="contain"
+                  />
+                  <ThemedText style={styles.gameTitleSeparator}>
+                    @ {getTeamDisplayName(game.teams.home.team.name)}
+                  </ThemedText>
+                </ThemedView>
+                <ThemedView style={styles.rightColumn}>
+                  {isGameStarted && (
+                    <ThemedView style={[styles.scoreBox, {
+                      backgroundColor: Colors[colorScheme ?? 'light'].surface,
+                      borderColor: Colors[colorScheme ?? 'light'].border,
+                    }]}>
+                      <ThemedText style={[styles.teamScore, {
+                        color: Colors[colorScheme ?? 'light'].text
+                      }]}>
+                        {game.teams.home.score}
+                      </ThemedText>
+                    </ThemedView>
+                  )}
+                </ThemedView>
               </ThemedView>
             </ThemedView>
             <ThemedText style={[styles.gameTime, {
@@ -307,6 +380,8 @@ export default function ParlayBuilderScreen() {
               {formatGameTime(game.gameDate)}
             </ThemedText>
           </ThemedView>
+          
+          {/* Expand Icon positioned separately */}
           {game.status.detailedState !== 'Final' && (
             <ThemedText style={[styles.expandIcon, {
               color: Colors[colorScheme ?? 'light'].tint
@@ -317,7 +392,7 @@ export default function ParlayBuilderScreen() {
         </TouchableOpacity>
 
         {isExpanded && (
-          <ThemedView style={styles.gameContent}>
+          <ThemedView style={styles.expandedGameContent}>
             {renderTeamSection(game.teams.away.team.name, game.awayTeamPlayers)}
             {renderTeamSection(game.teams.home.team.name, game.homeTeamPlayers)}
           </ThemedView>
@@ -560,9 +635,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   gameHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     padding: 16,
     position: 'relative',
   },
@@ -577,6 +649,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: 2,
+    justifyContent: 'space-between',
+  },
+  teamInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 8,
   },
   teamLogo: {
     width: 20,
@@ -597,18 +676,49 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: 2,
   },
+
+  scoreBox: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    minWidth: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  teamScore: {
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
   gameStatus: {
     fontSize: 12,
     fontWeight: '500',
     position: 'absolute',
     top: 16,
     right: 16,
+    zIndex: 2,
+  },
+  gameContent: {
+    flex: 1,
+    paddingRight: 40, // Make room for expand icon
+  },
+  rightColumn: {
+    width: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   expandIcon: {
     fontSize: 16,
     fontWeight: '600',
+    position: 'absolute',
+    right: 16,
+    top: '50%',
+    transform: [{ translateY: -8 }],
+    zIndex: 1,
   },
-  gameContent: {
+  expandedGameContent: {
     paddingHorizontal: 16,
     paddingBottom: 16,
     gap: 16,
