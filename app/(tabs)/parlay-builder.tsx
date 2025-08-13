@@ -533,7 +533,7 @@ export default function ParlayBuilderScreen() {
                 </ThemedText>
               </ThemedView>
               <ThemedText style={styles.selectedTitle}>
-                Parlay
+                Selected Players Parlay
               </ThemedText>
             </ThemedView>
             <ThemedView style={styles.selectedHeaderRight}>
@@ -542,7 +542,7 @@ export default function ParlayBuilderScreen() {
               }]}>
                 {selectedPlayers.length} selections
               </ThemedText>
-              <ThemedText style={[styles.expandIcon, {
+              <ThemedText style={[styles.parlayExpandIcon, {
                 color: Colors[colorScheme ?? 'light'].tint
               }]}>
                 {isSelectedExpanded ? '▼' : '▲'}
@@ -746,18 +746,22 @@ const styles = StyleSheet.create({
   },
   gameContent: {
     position: 'relative',
-    paddingRight: 100, // Make room for expand icon and longer game status
+    paddingRight: 100,
     marginTop: 12,
   },
 
   expandIcon: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '600',
     position: 'absolute',
     right: 0,
     top: '50%',
-    transform: [{ translateY: -8 }],
+    transform: [{ translateY: -35 }],
     zIndex: 1,
+  },
+  parlayExpandIcon: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   expandedGameContent: {
     paddingHorizontal: 16,
