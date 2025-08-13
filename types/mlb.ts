@@ -10,6 +10,10 @@ export interface MLBProbablePitcher {
   id: number;
   fullName: string;
   link: string;
+  stats?: {
+    era?: string;
+    handedness?: string;
+  };
 }
 
 export interface MLBPlayer {

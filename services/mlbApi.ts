@@ -216,21 +216,51 @@ export const formatGameTime = (gameDate: string): string => {
   return `${time} ${timeZoneAbbr}`;
 };
 
+export const getPitcherStats = async (pitcherId: number): Promise<{ era?: string; handedness?: string }> => {
+  try {
+    const response = await axios.get(
+      `${MLB_API_BASE}/people/${pitcherId}?hydrate=stats(group=[pitching],type=[season],season=2024)`
+    );
+    
+    const stats = response.data.people[0]?.stats?.[0]?.splits?.[0]?.stat;
+    const handedness = response.data.people[0]?.batSide?.code || response.data.people[0]?.throwSide?.code;
+    
+    return {
+      era: stats?.era ? parseFloat(stats.era).toFixed(2) : undefined,
+      handedness: handedness === 'L' ? 'LHP' : handedness === 'R' ? 'RHP' : undefined
+    };
+  } catch (error) {
+    console.error('Error fetching pitcher stats:', error);
+    return {};
+  }
+};
+
 export const getPitchers = async (gameId: number, gameState?: string, gameData?: any): Promise<{ 
-  away: { name: string | null; type: 'probable' | 'starting' | null }; 
-  home: { name: string | null; type: 'probable' | 'starting' | null } 
+  away: { name: string | null; type: 'probable' | 'starting' | null; stats?: { era?: string; handedness?: string } }; 
+  home: { name: string | null; type: 'probable' | 'starting' | null; stats?: { era?: string; handedness?: string } } 
 }> => {
   try {
     // For scheduled games, use probable pitchers from schedule data
     if (gameState === 'Preview') {
+      const awayPitcher = gameData?.teams?.away?.probablePitcher;
+      const homePitcher = gameData?.teams?.home?.probablePitcher;
+      
+      // Fetch stats for probable pitchers if available
+      const [awayStats, homeStats] = await Promise.all([
+        awayPitcher?.id ? getPitcherStats(awayPitcher.id) : Promise.resolve({}),
+        homePitcher?.id ? getPitcherStats(homePitcher.id) : Promise.resolve({})
+      ]);
+      
       return {
         away: { 
-          name: gameData?.teams?.away?.probablePitcher?.fullName || null, 
-          type: gameData?.teams?.away?.probablePitcher?.fullName ? 'probable' : null 
+          name: awayPitcher?.fullName || null, 
+          type: awayPitcher?.fullName ? 'probable' : null,
+          stats: awayStats
         },
         home: { 
-          name: gameData?.teams?.home?.probablePitcher?.fullName || null, 
-          type: gameData?.teams?.home?.probablePitcher?.fullName ? 'probable' : null 
+          name: homePitcher?.fullName || null, 
+          type: homePitcher?.fullName ? 'probable' : null,
+          stats: homeStats
         }
       };
     }
@@ -245,6 +275,8 @@ export const getPitchers = async (gameId: number, gameState?: string, gameData?:
     // Look for actual starting pitchers in the players list
     let awayPitcher = null;
     let homePitcher = null;
+    let awayPitcherId = null;
+    let homePitcherId = null;
     let awayPitcherType: 'probable' | 'starting' | null = null;
     let homePitcherType: 'probable' | 'starting' | null = null;
     
@@ -254,6 +286,7 @@ export const getPitchers = async (gameId: number, gameState?: string, gameData?:
         const player = boxscore.away.players[playerId];
         if (player?.position?.code === '1' && player?.person?.fullName) {
           awayPitcher = player.person.fullName;
+          awayPitcherId = player.person.id;
           awayPitcherType = 'starting';
           break;
         }
@@ -266,21 +299,28 @@ export const getPitchers = async (gameId: number, gameState?: string, gameData?:
         const player = boxscore.home.players[playerId];
         if (player?.position?.code === '1' && player?.person?.fullName) {
           homePitcher = player.person.fullName;
+          homePitcherId = player.person.id;
           homePitcherType = 'starting';
           break;
         }
       }
     }
     
+    // Fetch stats for actual starting pitchers if available
+    const [awayStats, homeStats] = await Promise.all([
+      awayPitcherId ? getPitcherStats(awayPitcherId) : Promise.resolve({}),
+      homePitcherId ? getPitcherStats(homePitcherId) : Promise.resolve({})
+    ]);
+    
     return {
-      away: { name: awayPitcher, type: awayPitcherType },
-      home: { name: homePitcher, type: homePitcherType }
+      away: { name: awayPitcher, type: awayPitcherType, stats: awayStats },
+      home: { name: homePitcher, type: homePitcherType, stats: homeStats }
     };
   } catch (error) {
     console.error('Error fetching pitchers:', error);
     return {
-      away: { name: null, type: null },
-      home: { name: null, type: null }
+      away: { name: null, type: null, stats: {} },
+      home: { name: null, type: null, stats: {} }
     };
   }
 };

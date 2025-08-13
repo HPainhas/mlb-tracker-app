@@ -29,8 +29,8 @@ interface GameWithPlayers extends Game {
   homeTeamPlayers: Player[];
   awayTeamPlayers: Player[];
   pitchers?: { 
-    away: { name: string | null; type: 'probable' | 'starting' | null }; 
-    home: { name: string | null; type: 'probable' | 'starting' | null } 
+    away: { name: string | null; type: 'probable' | 'starting' | null; stats?: { era?: string; handedness?: string } }; 
+    home: { name: string | null; type: 'probable' | 'starting' | null; stats?: { era?: string; handedness?: string } } 
   } | null;
 }
 
@@ -117,6 +117,24 @@ export default function ParlayBuilderScreen() {
       hour12: true,
       timeZoneName: 'short',
     });
+  };
+
+  const formatPitcherDisplay = (pitcher: { name: string | null; type: 'probable' | 'starting' | null; stats?: { era?: string; handedness?: string } }) => {
+    if (!pitcher.name) return 'TBD';
+    
+    const stats = [];
+    if (pitcher.stats?.handedness) {
+      stats.push(pitcher.stats.handedness);
+    }
+    if (pitcher.stats?.era) {
+      stats.push(`${pitcher.stats.era} ERA`);
+    }
+    
+    if (stats.length > 0) {
+      return `${pitcher.name} • ${stats.join(' • ')}`;
+    }
+    
+    return pitcher.name;
   };
 
   const isGameExpandable = (gameStatus: string) => {
@@ -366,19 +384,11 @@ export default function ParlayBuilderScreen() {
                         <ThemedText style={styles.gameTitle}>
                           {getTeamDisplayName(game.teams.away.team.name)}
                         </ThemedText>
-                        {game.pitchers?.away.name ? (
-                          <ThemedText style={[styles.pitcherText, {
-                            color: Colors[colorScheme ?? 'light'].muted
-                          }]}>
-                            P: {game.pitchers.away.name}
-                          </ThemedText>
-                        ) : (
-                          <ThemedText style={[styles.pitcherText, {
-                            color: Colors[colorScheme ?? 'light'].muted
-                          }]}>
-                            P: TBD
-                          </ThemedText>
-                        )}
+                        <ThemedText style={[styles.pitcherText, {
+                          color: Colors[colorScheme ?? 'light'].muted
+                        }]}>
+                          P: {formatPitcherDisplay(game.pitchers?.away || { name: null, type: null })}
+                        </ThemedText>
                       </ThemedView>
                     </ThemedView>
                   </ThemedView>
@@ -395,19 +405,11 @@ export default function ParlayBuilderScreen() {
                         }]}>
                           @ <ThemedText style={{ color: '#ffffff' }}>{getTeamDisplayName(game.teams.home.team.name)}</ThemedText>
                         </ThemedText>
-                        {game.pitchers?.home.name ? (
-                          <ThemedText style={[styles.pitcherText, {
-                            color: Colors[colorScheme ?? 'light'].muted
-                          }]}>
-                            P: {game.pitchers.home.name}
-                          </ThemedText>
-                        ) : (
-                          <ThemedText style={[styles.pitcherText, {
-                            color: Colors[colorScheme ?? 'light'].muted
-                          }]}>
-                            P: TBD
-                          </ThemedText>
-                        )}
+                        <ThemedText style={[styles.pitcherText, {
+                          color: Colors[colorScheme ?? 'light'].muted
+                        }]}>
+                          P: {formatPitcherDisplay(game.pitchers?.home || { name: null, type: null })}
+                        </ThemedText>
                       </ThemedView>
                     </ThemedView>
                   </ThemedView>
@@ -800,11 +802,14 @@ const styles = StyleSheet.create({
   teamNameContainer: {
     flex: 1,
     justifyContent: 'center',
+    flexShrink: 1,
   },
   pitcherText: {
     fontSize: 10,
     fontWeight: '400',
     marginTop: 1,
+    lineHeight: 12,
+    flexShrink: 1,
   },
   teamLogo: {
     width: 20,
