@@ -35,7 +35,15 @@ interface GameWithPlayers extends Game {
 }
 
 const betTypes = ['Hits', 'Total Bases', 'Home Runs', 'H+R+RBIs'];
-const thresholds = ['1+', '2+', '3+', '4+'];
+
+const getThresholds = (betType: string) => {
+  switch (betType) {
+    case 'Total Bases':
+      return ['2+', '3+', '4+', '5+'];
+    default:
+      return ['1+', '2+', '3+', '4+'];
+  }
+};
 
 export default function ParlayBuilderScreen() {
   const colorScheme = useColorScheme();
@@ -330,7 +338,7 @@ export default function ParlayBuilderScreen() {
           )}
         </ThemedView>
         <ThemedView style={styles.thresholdContainer}>
-          {thresholds.map((threshold) => {
+          {getThresholds(selectedBetType).map((threshold: string) => {
             const isSelected = playerSelection === threshold;
 
             return (
