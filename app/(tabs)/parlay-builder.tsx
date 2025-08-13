@@ -307,11 +307,13 @@ export default function ParlayBuilderScreen() {
               {formatGameTime(game.gameDate)}
             </ThemedText>
           </ThemedView>
-          <ThemedText style={[styles.expandIcon, {
-            color: Colors[colorScheme ?? 'light'].tint
-          }]}>
-            {isExpanded ? '▼' : '▶'}
-          </ThemedText>
+          {game.status.detailedState !== 'Final' && (
+            <ThemedText style={[styles.expandIcon, {
+              color: Colors[colorScheme ?? 'light'].tint
+            }]}>
+              {isExpanded ? '▼' : '▶'}
+            </ThemedText>
+          )}
         </TouchableOpacity>
 
         {isExpanded && (
