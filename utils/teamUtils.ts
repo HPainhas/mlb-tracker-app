@@ -3,7 +3,7 @@
 // Helper function to convert team names to abbreviation format
 export const getTeamDisplayName = (teamName: string): string => {
   const abbreviations: { [key: string]: string } = {
-    'Arizona Diamondbacks': 'ARI Diamondbacks',
+    'Arizona Diamondbacks': 'Diamondbacks',
     'Atlanta Braves': 'ATL Braves',
     'Baltimore Orioles': 'BAL Orioles',
     'Boston Red Sox': 'BOS Red Sox',
