@@ -191,7 +191,9 @@ export default function WeatherScreen() {
         <ThemedView style={styles.weatherInfo}>
           <ThemedView style={styles.weatherRow}>
             <ThemedView style={styles.weatherItem}>
-              <ThemedText style={styles.weatherIcon}>🌡️</ThemedText>
+              <ThemedText style={styles.weatherIcon}>
+                {Number(game.weather.temperature) >= 60 ? '🌡️' : '❄️'}
+              </ThemedText>
               <ThemedText
                 style={[
                   styles.weatherLabel,
