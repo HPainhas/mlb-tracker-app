@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderRadius: 8,
-    backgroundColor: 'rgba(10, 132, 255, 0.04)',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
     marginHorizontal: 4,
   },
   weatherIcon: {
