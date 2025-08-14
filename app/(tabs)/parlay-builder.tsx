@@ -947,10 +947,6 @@ const styles = StyleSheet.create({
     fontSize: 8,
     fontWeight: '400',
   },
-  playerPosition: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
   thresholdContainer: {
     flexDirection: 'row',
     gap: 4,
