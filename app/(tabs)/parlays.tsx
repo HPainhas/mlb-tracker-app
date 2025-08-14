@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#979797',
   },
   parlayDate: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '400',
   },
   parlayOdds: {
