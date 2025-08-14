@@ -230,7 +230,7 @@ export default function GamesScreen() {
             onPress={() => toggleGameExpansion(game.gamePk)}
           >
             <ThemedText style={[styles.expandButtonText, {
-              color: Colors[colorScheme ?? 'light'].tint
+              color: Colors[colorScheme ?? 'light'].secondary
             }]}>
               {isExpanded ? 'Hide Lineups' : 'Show Lineups'}
             </ThemedText>
@@ -437,25 +437,31 @@ const styles = StyleSheet.create({
   lineupTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 16,
     textAlign: 'center',
   },
   lineupsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 16,
+    gap: 12,
   },
   teamLineupContainer: {
     flex: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
   },
   teamLineupName: {
     fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
+    fontWeight: '600',
+    marginBottom: 12,
     textAlign: 'center',
+    paddingBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   lineupContainer: {
-    gap: 4,
+    gap: 6,
   },
   playerText: {
     fontSize: 12,
