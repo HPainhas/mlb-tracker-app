@@ -388,15 +388,24 @@ export default function ParlayBuilderScreen() {
                 {formatGameTime(game.gameDate)}
               </ThemedText>
             </ThemedView>
-            <ThemedText style={[styles.gameStatus, {
-              color: game.status.abstractGameState === 'Live' 
-                ? Colors[colorScheme ?? 'light'].success
-                : game.status.abstractGameState === 'Final'
-                ? Colors[colorScheme ?? 'light'].muted
-                : Colors[colorScheme ?? 'light'].tint
-            }]}>
-              {formatGameStatus(game.status.detailedState)}
-            </ThemedText>
+            <ThemedView style={styles.gameHeaderRight}>
+              <ThemedText style={[styles.gameStatus, {
+                color: game.status.abstractGameState === 'Live' 
+                  ? Colors[colorScheme ?? 'light'].success
+                  : game.status.abstractGameState === 'Final'
+                  ? Colors[colorScheme ?? 'light'].muted
+                  : Colors[colorScheme ?? 'light'].tint
+              }]}>
+                {formatGameStatus(game.status.detailedState)}
+              </ThemedText>
+              {isGameExpandable(game.status.detailedState) && (
+                <ThemedText style={[styles.expandIcon, {
+                  color: Colors[colorScheme ?? 'light'].tint
+                }]}>
+                  {isExpanded ? '▾' : '▸'}
+                </ThemedText>
+              )}
+            </ThemedView>
           </ThemedView>
 
           <ThemedView style={styles.gameContent}>
@@ -474,14 +483,7 @@ export default function ParlayBuilderScreen() {
               </ThemedView>
             </ThemedView>
             
-            {/* Expand Icon positioned separately */}
-            {isGameExpandable(game.status.detailedState) && (
-              <ThemedText style={[styles.expandIcon, {
-                color: Colors[colorScheme ?? 'light'].tint
-              }]}>
-                {isExpanded ? '▼' : '▶'}
-              </ThemedText>
-            )}
+
           </ThemedView>
         </TouchableOpacity>
 
@@ -797,6 +799,11 @@ const styles = StyleSheet.create({
   gameHeaderLeft: {
     flex: 1,
   },
+  gameHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   gameInfo: {
     flex: 1,
   },
@@ -891,13 +898,8 @@ const styles = StyleSheet.create({
   },
 
   expandIcon: {
-    fontSize: 20,
-    fontWeight: '600',
-    position: 'absolute',
-    right: 0,
-    top: '50%',
-    transform: [{ translateY: -20 }],
-    zIndex: 1,
+    fontSize: 23,
+    fontWeight: '400',
   },
   parlayExpandIcon: {
     fontSize: 16,
