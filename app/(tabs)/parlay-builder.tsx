@@ -894,7 +894,6 @@ const styles = StyleSheet.create({
   gameContent: {
     position: 'relative',
     paddingRight: 100,
-    marginTop: 12,
   },
 
   expandIcon: {
