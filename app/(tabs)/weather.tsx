@@ -325,7 +325,7 @@ export default function WeatherScreen() {
       <ThemedView style={styles.header}>
         <ThemedView style={styles.headerTop}>
           <ThemedText type="title" style={styles.headerTitle}>
-            MLB Games
+            Today's Weather
           </ThemedText>
           <ThemedText style={[styles.appBrand, {
             color: Colors[colorScheme ?? 'light'].tint
@@ -341,7 +341,7 @@ export default function WeatherScreen() {
             },
           ]}
         >
-          Today's match-ups and forecasts
+          See the latest forecasts
         </ThemedText>
       </ThemedView>
 

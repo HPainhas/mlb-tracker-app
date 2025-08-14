@@ -573,7 +573,7 @@ export default function ParlayBuilderScreen() {
         <ThemedText style={[styles.headerSubtitle, {
           color: Colors[colorScheme ?? 'light'].secondary
         }]}>
-          Select players by game and team
+          Make your selections
         </ThemedText>
       </ThemedView>
 
