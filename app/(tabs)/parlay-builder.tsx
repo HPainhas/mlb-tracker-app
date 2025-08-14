@@ -367,125 +367,117 @@ export default function ParlayBuilderScreen() {
   };
 
   const renderGame = ({ item: game }: { item: GameWithPlayers }) => {
-    const isExpanded = expandedGames.has(game.gamePk);
     const isGameStarted = game.status.abstractGameState !== 'Preview';
+    const isExpanded = expandedGames.has(game.gamePk);
 
     return (
       <ThemedView style={[styles.gameCard, { 
         backgroundColor: Colors[colorScheme ?? 'light'].card,
         borderColor: Colors[colorScheme ?? 'light'].border,
       }]}>
-        <TouchableOpacity
-          style={styles.gameContainer}
-          onPress={() => toggleGameExpansion(game.gamePk)}
-          disabled={!isGameExpandable(game.status.detailedState)}
-        >
-          <ThemedView style={styles.gameHeader}>
-            <ThemedView style={styles.gameHeaderLeft}>
-              <ThemedText style={[styles.gameTime, {
-                color: Colors[colorScheme ?? 'light'].secondary
-              }]}>
-                {formatGameTime(game.gameDate)}
-              </ThemedText>
-            </ThemedView>
-            <ThemedView style={styles.gameHeaderRight}>
-              <ThemedText style={[styles.gameStatus, {
-                color: game.status.abstractGameState === 'Live' 
-                  ? Colors[colorScheme ?? 'light'].success
-                  : game.status.abstractGameState === 'Final'
-                  ? Colors[colorScheme ?? 'light'].muted
-                  : Colors[colorScheme ?? 'light'].tint
-              }]}>
-                {formatGameStatus(game.status.detailedState)}
-              </ThemedText>
-              {isGameExpandable(game.status.detailedState) && (
-                <ThemedText style={[styles.expandIcon, {
-                  color: Colors[colorScheme ?? 'light'].tint
-                }]}>
-                  {isExpanded ? '▾' : '▸'}
-                </ThemedText>
-              )}
-            </ThemedView>
+        <ThemedView style={styles.gameHeader}>
+          <ThemedView style={styles.gameHeaderLeft}>
+            <ThemedText style={[styles.gameTime, {
+              color: Colors[colorScheme ?? 'light'].secondary
+            }]}>
+              {formatGameTime(game.gameDate)}
+            </ThemedText>
           </ThemedView>
+          <ThemedText style={[styles.gameStatus, {
+            color: game.status.abstractGameState === 'Live' 
+              ? Colors[colorScheme ?? 'light'].success
+              : game.status.abstractGameState === 'Final'
+              ? Colors[colorScheme ?? 'light'].muted
+              : Colors[colorScheme ?? 'light'].tint
+          }]}>
+            {formatGameStatus(game.status.detailedState)}
+          </ThemedText>
+        </ThemedView>
 
-          <ThemedView style={styles.gameContent}>
-            <ThemedView style={styles.gameTitleContainer}>
-              <ThemedView style={styles.teamsAndScoresRow}>
-                <ThemedView style={styles.teamsColumn}>
-                  <ThemedView style={styles.teamTitleRow}>
-                    <ThemedView style={styles.teamInfo}>
-                      <Image 
-                        source={{ uri: getTeamLogoUrl(game.teams.away.team.name) || undefined }} 
-                        style={styles.teamLogo}
-                        resizeMode="contain"
-                      />
-                      <ThemedView style={styles.teamNameContainer}>
-                        <ThemedText style={styles.gameTitle}>
-                          {getTeamDisplayName(game.teams.away.team.name)}
-                        </ThemedText>
-                        <ThemedText style={[styles.pitcherText, {
-                          color: Colors[colorScheme ?? 'light'].muted
-                        }]}>
-                          P: {formatPitcherDisplay(game.pitchers?.away || { name: null, type: null })}
-                        </ThemedText>
-                      </ThemedView>
-                    </ThemedView>
-                  </ThemedView>
-                  <ThemedView style={styles.teamTitleRow}>
-                    <ThemedView style={styles.teamInfo}>
-                      <Image 
-                        source={{ uri: getTeamLogoUrl(game.teams.home.team.name) || undefined }} 
-                        style={styles.teamLogo}
-                        resizeMode="contain"
-                      />
-                      <ThemedView style={styles.teamNameContainer}>
-                        <ThemedText style={[styles.gameTitle, {
-                          color: Colors[colorScheme ?? 'light'].secondary
-                        }]}>
-                          @ <ThemedText style={{ color: '#ffffff' }}>{getTeamDisplayName(game.teams.home.team.name)}</ThemedText>
-                        </ThemedText>
-                        <ThemedText style={[styles.pitcherText, {
-                          color: Colors[colorScheme ?? 'light'].muted
-                        }]}>
-                          P: {formatPitcherDisplay(game.pitchers?.home || { name: null, type: null })}
-                        </ThemedText>
-                      </ThemedView>
-                    </ThemedView>
-                  </ThemedView>
-                </ThemedView>
-                <ThemedView style={styles.scoresColumn}>
-                  {isGameStarted && (
-                    <ThemedView style={[styles.scoreBox, {
-                      backgroundColor: Colors[colorScheme ?? 'light'].surface,
-                      borderColor: Colors[colorScheme ?? 'light'].border,
-                    }]}>
-                      <ThemedText style={[styles.teamScore, {
-                        color: Colors[colorScheme ?? 'light'].text
-                      }]}>
-                        {game.teams.away.score}
-                      </ThemedText>
-                    </ThemedView>
-                  )}
-                  {isGameStarted && (
-                    <ThemedView style={[styles.scoreBox, {
-                      backgroundColor: Colors[colorScheme ?? 'light'].surface,
-                      borderColor: Colors[colorScheme ?? 'light'].border,
-                      marginTop: 18,
-                    }]}>
-                      <ThemedText style={[styles.teamScore, {
-                        color: Colors[colorScheme ?? 'light'].text
-                      }]}>
-                        {game.teams.home.score}
-                      </ThemedText>
-                    </ThemedView>
-                  )}
-                </ThemedView>
+        <ThemedView style={styles.teamsContainer}>
+          <ThemedView style={styles.teamRow}>
+            <ThemedView style={styles.teamInfo}>
+              <Image 
+                source={{ uri: getTeamLogoUrl(game.teams.away.team.name) || undefined }} 
+                style={styles.teamLogo}
+                resizeMode="contain"
+              />
+              <ThemedView style={styles.teamNameContainer}>
+                <ThemedText style={[styles.teamName, {
+                  color: '#ffffff'
+                }]}>
+                  {getTeamDisplayName(game.teams.away.team.name)}
+                </ThemedText>
+                <ThemedText style={[styles.pitcherText, {
+                  color: Colors[colorScheme ?? 'light'].muted
+                }]}>
+                  P: {formatPitcherDisplay(game.pitchers?.away || { name: null, type: null })}
+                </ThemedText>
               </ThemedView>
             </ThemedView>
-            
-
+            {isGameStarted && (
+              <ThemedView style={[styles.scoreBox, {
+                backgroundColor: Colors[colorScheme ?? 'light'].surface,
+                borderColor: Colors[colorScheme ?? 'light'].border,
+              }]}>
+                <ThemedText style={[styles.teamScore, {
+                  color: Colors[colorScheme ?? 'light'].text
+                }]}>
+                  {game.teams.away.score}
+                </ThemedText>
+              </ThemedView>
+            )}
           </ThemedView>
-        </TouchableOpacity>
+
+          <ThemedView style={styles.teamRow}>
+            <ThemedView style={styles.teamInfo}>
+              <Image 
+                source={{ uri: getTeamLogoUrl(game.teams.home.team.name) || undefined }} 
+                style={styles.teamLogo}
+                resizeMode="contain"
+              />
+              <ThemedView style={styles.teamNameContainer}>
+                <ThemedText style={[styles.teamName, {
+                  color: Colors[colorScheme ?? 'light'].secondary
+                }]}>
+                  @ <ThemedText style={{ color: '#ffffff' }}>{getTeamDisplayName(game.teams.home.team.name)}</ThemedText>
+                </ThemedText>
+                <ThemedText style={[styles.pitcherText, {
+                  color: Colors[colorScheme ?? 'light'].muted
+                }]}>
+                  P: {formatPitcherDisplay(game.pitchers?.home || { name: null, type: null })}
+                </ThemedText>
+              </ThemedView>
+            </ThemedView>
+            {isGameStarted && (
+              <ThemedView style={[styles.scoreBox, {
+                backgroundColor: Colors[colorScheme ?? 'light'].surface,
+                borderColor: Colors[colorScheme ?? 'light'].border,
+              }]}>
+                <ThemedText style={[styles.teamScore, {
+                  color: Colors[colorScheme ?? 'light'].text
+                }]}>
+                  {game.teams.home.score}
+                </ThemedText>
+              </ThemedView>
+            )}
+          </ThemedView>
+        </ThemedView>
+
+        {(game.status.abstractGameState === 'Live' || game.status.abstractGameState === 'Preview') && (
+          <ThemedView style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.expandButton}
+              onPress={() => toggleGameExpansion(game.gamePk)}
+            >
+              <ThemedText style={[styles.expandButtonText, {
+                color: Colors[colorScheme ?? 'light'].secondary
+              }]}>
+                {isExpanded ? 'Hide Players' : 'Show Players'}
+              </ThemedText>
+            </TouchableOpacity>
+          </ThemedView>
+        )}
 
         {isExpanded && (
           <ThemedView style={styles.expandedGameContent}>
@@ -779,16 +771,13 @@ const styles = StyleSheet.create({
   },
   gameCard: {
     borderRadius: 16,
+    padding: 20,
     marginBottom: 12,
-    borderWidth: StyleSheet.hairlineWidth,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
-  },
-  gameContainer: {
-    padding: 16,
   },
   gameHeader: {
     flexDirection: 'row',
@@ -869,18 +858,18 @@ const styles = StyleSheet.create({
   },
 
   scoreBox: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
     borderWidth: StyleSheet.hairlineWidth,
-    minWidth: 28,
+    minWidth: 40,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
   },
   teamScore: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     textAlign: 'center',
   },
 
@@ -890,6 +879,36 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     textAlign: 'right',
+  },
+  teamsContainer: {
+    marginBottom: 8,
+  },
+  teamRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingVertical: 4,
+  },
+  teamName: {
+    fontSize: 18,
+    fontWeight: '600',
+    flex: 1,
+  },
+  buttonContainer: {
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  expandButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    width: '100%',
+    alignItems: 'center',
+  },
+  expandButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   gameContent: {
     position: 'relative',
@@ -905,8 +924,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   expandedGameContent: {
-    paddingHorizontal: 16,
+    paddingTop: 16,
     paddingBottom: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
     gap: 16,
   },
   teamSection: {
