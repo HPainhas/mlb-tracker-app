@@ -76,7 +76,11 @@ export default function ParlaysScreen() {
         <ThemedText style={[styles.parlayDate, {
           color: Colors[colorScheme ?? 'light'].muted
         }]}>
-          Created: {new Date(parlay.created).toLocaleDateString()}
+          Created: {new Date(parlay.created).toLocaleDateString()} at {new Date(parlay.created).toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          })}
         </ThemedText>
         <ThemedText style={[styles.parlayOdds, {
           color: Colors[colorScheme ?? 'light'].tint
