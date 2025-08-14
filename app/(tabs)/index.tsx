@@ -384,8 +384,8 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   teamLogo: {
-    width: 24,
-    height: 24,
+    width: 20,
+    height: 20,
     marginTop: 2,
   },
   teamName: {
