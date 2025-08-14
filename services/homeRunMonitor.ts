@@ -94,7 +94,6 @@ export class HomeRunMonitor {
     try {
       const gameDetails = await getGameDetails(game.gamePk);
       if (!gameDetails) {
-        console.log(`No live feed data available for game ${game.gamePk} - ${game.teams.away.team.name} @ ${game.teams.home.team.name}`);
         // Try alternative approach - check boxscore for recent scoring plays
         await this.checkBoxscoreForHomeRunsFallback(game);
         return;
@@ -105,7 +104,6 @@ export class HomeRunMonitor {
 
       if (!gameState) {
         // First time checking this game
-        console.log(`Starting to monitor game ${game.gamePk} for home runs (current count: ${currentHomeRunCount})`);
         this.gameStates.set(game.gamePk, {
           gameId: game.gamePk,
           lastHomeRunCount: currentHomeRunCount,
@@ -254,7 +252,6 @@ export class HomeRunMonitor {
       
       if (!gameState) {
         // First time checking this game
-        console.log(`Starting to monitor game ${game.gamePk} via boxscore (total score: ${totalScore})`);
         this.gameStates.set(game.gamePk, {
           gameId: game.gamePk,
           lastHomeRunCount: totalScore, // Use total score as proxy
