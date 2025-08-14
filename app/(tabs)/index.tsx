@@ -474,13 +474,13 @@ const styles = StyleSheet.create({
   },
   lineupSection: {
     marginTop: 16,
-    paddingTop: 16,
+    paddingTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   lineupTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 16,
+    marginBottom: 12,
     textAlign: 'center',
   },
   lineupsContainer: {
