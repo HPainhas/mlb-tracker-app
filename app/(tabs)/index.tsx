@@ -421,7 +421,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    width: '100%',
+    alignItems: 'center',
   },
   expandButtonText: {
     fontSize: 12,
