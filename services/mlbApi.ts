@@ -62,6 +62,23 @@ export const getSchedule = async (): Promise<Game[]> => {
 // Export fetchGames as an alias for getSchedule for backwards compatibility
 export const fetchGames = getSchedule;
 
+export const getGameDetails = async (gameId: number): Promise<any> => {
+  try {
+    const response = await axios.get(
+      `${MLB_API_BASE}/game/${gameId}/feed/live`
+    );
+    
+    return response.data;
+  } catch (error: any) {
+    // 404 errors are expected for games without live feed data
+    if (error.response?.status === 404) {
+      return null;
+    }
+    console.error(`Error fetching game details for ${gameId}:`, error);
+    return null;
+  }
+};
+
 export const getLineup = async (gameId: number, teamId: number): Promise<Player[]> => {
   try {
     // Try boxscore first for lineup

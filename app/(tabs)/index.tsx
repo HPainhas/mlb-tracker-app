@@ -11,6 +11,7 @@ import { getTeamLogoUrl } from '@/services/teamLogos';
 import { getTeamDisplayName } from '@/utils/teamUtils';
 import { formatGameStatus, formatGameTime, formatPitcherDisplay, sortGamesByPriority } from '@/utils/gameUtils';
 import { Game, LineupOrRoster } from '@/types/mlb';
+import { notificationService } from '@/services/notificationService';
 
 interface GameWithLineup extends Game {
   lineupOrRoster?: LineupOrRoster | null;
@@ -64,6 +65,15 @@ export default function GamesScreen() {
   const onRefresh = () => {
     setRefreshing(true);
     loadGames();
+  };
+
+  const testNotification = async () => {
+    await notificationService.showHomeRunNotification({
+      playerName: 'Shohei Ohtani',
+      homeRunCount: 23,
+      description: 'fly ball to the right field',
+      gameId: 12345,
+    });
   };
 
   const toggleGameExpansion = (gameId: number) => {
@@ -275,9 +285,23 @@ export default function GamesScreen() {
       backgroundColor: Colors[colorScheme ?? 'light'].background 
     }]} edges={['top', 'left', 'right']}>
       <ThemedView style={styles.header}>
-        <ThemedText type="title" style={styles.headerTitle}>
-          Today's Games
-        </ThemedText>
+        <ThemedView style={styles.headerTop}>
+          <ThemedText type="title" style={styles.headerTitle}>
+            Today's Games
+          </ThemedText>
+          <TouchableOpacity
+            style={[styles.testButton, {
+              backgroundColor: Colors[colorScheme ?? 'light'].tint,
+            }]}
+            onPress={testNotification}
+          >
+            <ThemedText style={[styles.testButtonText, {
+              color: '#ffffff'
+            }]}>
+              Test HR
+            </ThemedText>
+          </TouchableOpacity>
+        </ThemedView>
         <ThemedText style={[styles.headerSubtitle, {
           color: Colors[colorScheme ?? 'light'].secondary
         }]}>
@@ -311,6 +335,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
     marginBottom: 8,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  testButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  testButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   headerTitle: {
     fontSize: 32,
