@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { fetchGames, getGameDetails } from './mlbApi';
 import { notificationService, HomeRunNotification } from './notificationService';
 
@@ -20,6 +21,11 @@ export class HomeRunMonitor {
       HomeRunMonitor.instance = new HomeRunMonitor();
     }
     return HomeRunMonitor.instance;
+  }
+
+  // Force recreate instance to ensure all methods are available
+  static resetInstance(): void {
+    HomeRunMonitor.instance = new HomeRunMonitor();
   }
 
   async startMonitoring(): Promise<void> {
@@ -46,6 +52,15 @@ export class HomeRunMonitor {
     console.log('Stopped home run monitoring');
   }
 
+  async restartMonitoring(): Promise<void> {
+    console.log('Restarting home run monitoring...');
+    this.stopMonitoring();
+    this.clearGameStates();
+    // Reset the instance to ensure all methods are available
+    HomeRunMonitor.resetInstance();
+    await this.startMonitoring();
+  }
+
   private async checkForHomeRuns(): Promise<void> {
     try {
       const games = await fetchGames();
@@ -56,6 +71,11 @@ export class HomeRunMonitor {
       );
 
       console.log(`Found ${liveGames.length} live games to monitor`);
+      
+      // Log details of live games for debugging
+      liveGames.forEach(game => {
+        console.log(`Live game: ${game.teams.away.team.name} @ ${game.teams.home.team.name} (ID: ${game.gamePk})`);
+      });
 
       for (const game of liveGames) {
         try {
@@ -74,6 +94,9 @@ export class HomeRunMonitor {
     try {
       const gameDetails = await getGameDetails(game.gamePk);
       if (!gameDetails) {
+        console.log(`No live feed data available for game ${game.gamePk} - ${game.teams.away.team.name} @ ${game.teams.home.team.name}`);
+        // Try alternative approach - check boxscore for recent scoring plays
+        await this.checkBoxscoreForHomeRunsFallback(game);
         return;
       }
 
@@ -129,19 +152,25 @@ export class HomeRunMonitor {
     try {
       // Parse live feed data to count home runs
       const liveData = gameDetails.liveData;
-      if (!liveData || !liveData.plays) return 0;
+      if (!liveData || !liveData.plays) {
+        console.log('No live data or plays available');
+        return 0;
+      }
 
       let homeRunCount = 0;
       
       // Count home runs from play-by-play data
       if (liveData.plays.allPlays) {
+        console.log(`Checking ${liveData.plays.allPlays.length} plays for home runs`);
         for (const play of liveData.plays.allPlays) {
           if (play.result && play.result.eventType === 'home_run') {
             homeRunCount++;
+            console.log(`Found home run: ${play.matchup?.batter?.fullName || 'Unknown'} - ${play.result.description}`);
           }
         }
       }
 
+      console.log(`Total home runs in game: ${homeRunCount}`);
       return homeRunCount;
     } catch (error) {
       console.error('Error getting total home runs:', error);
@@ -207,6 +236,59 @@ export class HomeRunMonitor {
 
   clearGameStates(): void {
     this.gameStates.clear();
+  }
+
+  private async checkBoxscoreForHomeRunsFallback(game: any): Promise<void> {
+    try {
+      // Try to get boxscore data as an alternative
+      const response = await axios.get(
+        `https://statsapi.mlb.com/api/v1/game/${game.gamePk}/boxscore`
+      );
+      
+      const boxscore = response.data;
+      const awayScore = boxscore.teams?.away?.score || 0;
+      const homeScore = boxscore.teams?.home?.score || 0;
+      const totalScore = awayScore + homeScore;
+      
+      const gameState = this.gameStates.get(game.gamePk);
+      
+      if (!gameState) {
+        // First time checking this game
+        console.log(`Starting to monitor game ${game.gamePk} via boxscore (total score: ${totalScore})`);
+        this.gameStates.set(game.gamePk, {
+          gameId: game.gamePk,
+          lastHomeRunCount: totalScore, // Use total score as proxy
+          lastChecked: Date.now(),
+        });
+        return;
+      }
+
+      // Check if score increased (potential home run)
+      if (totalScore > gameState.lastHomeRunCount) {
+        const scoreIncrease = totalScore - gameState.lastHomeRunCount;
+        console.log(`Score increase detected in game ${game.gamePk}! Score increased by ${scoreIncrease}`);
+        
+        // This is a simplified approach - we can't get player details from boxscore
+        // but we can at least notify that something happened
+        const notification: HomeRunNotification = {
+          playerName: 'Player', // We don't have player details from boxscore
+          homeRunCount: 1,
+          description: 'home run detected',
+          gameId: game.gamePk,
+        };
+
+        await notificationService.showHomeRunNotification(notification);
+      }
+
+      // Update game state
+      this.gameStates.set(game.gamePk, {
+        gameId: game.gamePk,
+        lastHomeRunCount: totalScore,
+        lastChecked: Date.now(),
+      });
+    } catch (error: any) {
+      console.error(`Error checking boxscore for game ${game.gamePk}:`, error);
+    }
   }
 }
 

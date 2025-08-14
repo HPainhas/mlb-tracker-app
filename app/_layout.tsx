@@ -20,7 +20,8 @@ export default function RootLayout() {
     const initializeNotifications = async () => {
       try {
         await notificationService.initialize();
-        await homeRunMonitor.startMonitoring();
+        // Reset the home run monitor instance to ensure all methods are available
+        homeRunMonitor.restartMonitoring();
       } catch (error) {
         console.error('Error initializing notifications:', error);
       }
