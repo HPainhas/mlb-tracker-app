@@ -8,7 +8,10 @@ export const formatGameStatus = (detailedState: string): string => {
   return detailedState
     .replace('DELAYED START', 'DELAYED')
     .replace('Delayed Start', 'Delayed')
-    .replace('delayed start', 'delayed');
+    .replace('delayed start', 'delayed')
+    .replace('IN PROGRESS', 'LIVE')
+    .replace('In Progress', 'Live')
+    .replace('in progress', 'live');
 };
 
 /**
