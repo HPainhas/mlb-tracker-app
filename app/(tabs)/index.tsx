@@ -234,18 +234,20 @@ export default function GamesScreen() {
           </ThemedView>
         </ThemedView>
 
-        <ThemedView style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.expandButton}
-            onPress={() => toggleGameExpansion(game.gamePk)}
-          >
-            <ThemedText style={[styles.expandButtonText, {
-              color: Colors[colorScheme ?? 'light'].secondary
-            }]}>
-              {isExpanded ? 'Hide Lineups' : 'Show Lineups'}
-            </ThemedText>
-          </TouchableOpacity>
-        </ThemedView>
+        {(game.status.abstractGameState === 'Live' || game.status.abstractGameState === 'Preview') && (
+          <ThemedView style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.expandButton}
+              onPress={() => toggleGameExpansion(game.gamePk)}
+            >
+              <ThemedText style={[styles.expandButtonText, {
+                color: Colors[colorScheme ?? 'light'].secondary
+              }]}>
+                {isExpanded ? 'Hide Lineups' : 'Show Lineups'}
+              </ThemedText>
+            </TouchableOpacity>
+          </ThemedView>
+        )}
 
         {isExpanded && (
           <ThemedView style={[styles.lineupSection, {
@@ -261,7 +263,7 @@ export default function GamesScreen() {
                 <ThemedText style={[styles.teamLineupName, {
                   color: Colors[colorScheme ?? 'light'].secondary,
                 }]}>
-                  {game.teams.away.team.name}
+                  {game.teams.away.team.abbreviation}
                 </ThemedText>
                 {renderLineupOrRoster(game.lineupOrRoster, "away")}
               </ThemedView>
@@ -269,7 +271,7 @@ export default function GamesScreen() {
                 <ThemedText style={[styles.teamLineupName, {
                   color: Colors[colorScheme ?? 'light'].secondary,
                 }]}>
-                  {game.teams.home.team.name}
+                  {game.teams.home.team.abbreviation}
                 </ThemedText>
                 {renderLineupOrRoster(game.lineupOrRoster, "home")}
               </ThemedView>
