@@ -277,9 +277,16 @@ export default function GamesScreen() {
       backgroundColor: Colors[colorScheme ?? 'light'].background 
     }]} edges={['top', 'left', 'right']}>
       <ThemedView style={styles.header}>
-        <ThemedText type="title" style={styles.headerTitle}>
-          Today's Games
-        </ThemedText>
+        <ThemedView style={styles.headerTop}>
+          <ThemedText type="title" style={styles.headerTitle}>
+            Today's Games
+          </ThemedText>
+          <ThemedText style={[styles.appBrand, {
+            color: Colors[colorScheme ?? 'light'].tint
+          }]}>
+            MLB Tracker
+          </ThemedText>
+        </ThemedView>
         <ThemedText style={[styles.headerSubtitle, {
           color: Colors[colorScheme ?? 'light'].secondary
         }]}>
@@ -314,12 +321,21 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     marginBottom: 8,
   },
-
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   headerTitle: {
     fontSize: 32,
     fontWeight: '700',
     letterSpacing: -0.8,
-    marginBottom: 4,
+  },
+  appBrand: {
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
   headerSubtitle: {
     fontSize: 17,
