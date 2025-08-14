@@ -169,17 +169,17 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   headerTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
     letterSpacing: -0.8,
   },
   appBrand: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0.5,
   },
   headerSubtitle: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '400',
   },
   listContainer: {
